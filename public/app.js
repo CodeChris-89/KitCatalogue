@@ -114,6 +114,7 @@
         $('topbar-owner-actions').classList.add('hidden');
         $('empty-owner-actions').classList.add('hidden');
         $('nav-data-portability').classList.add('hidden');
+        $('nav-settings')?.classList.add('hidden');
         $('sidebar-user-footer').classList.add('hidden');
 
         updateStatsAndCounts();
@@ -616,6 +617,16 @@
     $('analytics-view').classList.add('hidden');
     $('portability-view').classList.add('hidden');
     $('admin-view').classList.add('hidden');
+    $('settings-view').classList.add('hidden');
+
+    if (navKey === 'settings') {
+      $('settings-view').classList.remove('hidden');
+      $('view-title').textContent = 'Account & AI Settings';
+      $('view-subtitle').textContent =
+        'Personal AI extraction provider and user account security';
+      loadUserSettings();
+      return;
+    }
 
     if (navKey === 'admin') {
       $('admin-view').classList.remove('hidden');
@@ -768,7 +779,7 @@
     }
   }
 
-  async function openUserSettingsModal() {
+  async function loadUserSettings() {
     if (!state.user) return;
     try {
       const res = await api('/api/user/ai-settings');
@@ -797,11 +808,13 @@
       $('user-ai-test-result').classList.add('hidden');
       $('user-profile-displayname').value = state.user.displayName || state.user.username;
       $('user-profile-password').value = '';
-
-      showModal('user-settings-modal');
     } catch (err) {
       showToast(err.message, 'error');
     }
+  }
+
+  function openUserSettingsModal() {
+    switchNavigation('settings');
   }
 
   function applyAutofillToKitForm(kitData, sourceName = '') {
@@ -1698,9 +1711,11 @@
       $('kit-autofill-cover-preview').classList.add('hidden');
     });
 
-    $('open-user-settings-btn')?.addEventListener('click', () => openUserSettingsModal());
-    $('user-chip-trigger')?.addEventListener('click', () => openUserSettingsModal());
-    $('kit-open-ai-config-btn')?.addEventListener('click', () => openUserSettingsModal());
+    $('user-chip-trigger')?.addEventListener('click', () => switchNavigation('settings'));
+    $('kit-open-ai-config-btn')?.addEventListener('click', () => {
+      $('kit-form-modal').classList.add('hidden');
+      switchNavigation('settings');
+    });
 
     $('user-ai-provider')?.addEventListener('change', (e) => {
       const prov = e.target.value;

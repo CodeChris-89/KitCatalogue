@@ -128,10 +128,16 @@
         <div class="nav-section-label">CATEGORIES</div>
         <div id="sidebar-categories" class="sidebar-categories"></div>
 
+        <div class="nav-section-label">ACCOUNT</div>
+        <button type="button" id="nav-settings" class="nav-item" data-nav="settings">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </button>
+
         <div id="admin-nav-section" class="hidden">
-          <div class="nav-section-label">SYSTEM</div>
+          <div class="nav-section-label">ADMINISTRATION</div>
           <button type="button" class="nav-item" data-nav="admin">
-            <span class="nav-icon">⚙️</span>
+            <span class="nav-icon">🛡️</span>
             <span>Admin Settings</span>
             <span class="nav-badge badge-cyan">Admin</span>
           </button>
@@ -139,7 +145,7 @@
       </nav>
 
       <div id="sidebar-user-footer" class="sidebar-footer">
-        <div class="user-chip" id="user-chip-trigger" title="Open Personal AI &amp; Account Settings" style="cursor: pointer;">
+        <div class="user-chip" id="user-chip-trigger" title="Open Settings" style="cursor: pointer;">
           <div id="user-avatar" class="user-avatar">U</div>
           <div class="user-meta">
             <div class="user-name-row">
@@ -149,10 +155,7 @@
             <span id="current-user-handle" class="user-handle">@builder</span>
           </div>
         </div>
-        <div style="display: flex; gap: 4px; align-items: center;">
-          <button type="button" id="open-user-settings-btn" class="btn btn-ghost btn-sm" title="Personal AI Key &amp; Account Settings">🔑 AI</button>
-          <button type="button" id="logout-btn" class="btn btn-ghost btn-sm" title="Sign Out">Sign Out</button>
-        </div>
+        <button type="button" id="logout-btn" class="btn btn-ghost btn-sm" title="Sign Out">Sign Out</button>
       </div>
     </aside>
 
@@ -450,6 +453,91 @@
               </table>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- DEDICATED USER SETTINGS VIEW (PERSONAL AI PROVIDER + ACCOUNT SETTINGS) -->
+      <section id="settings-view" class="content-section hidden">
+        <div class="admin-grid">
+          <!-- Card 1: Personal AI Extraction Assistant -->
+          <form id="user-ai-settings-form" class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>✨ Personal AI Extraction Assistant</h3>
+                <p>Your API Key is encrypted at rest with AES-256-GCM and strictly isolated to your account (<strong id="user-ai-account-handle">@user</strong>). No other user or administrator can view or use your key.</p>
+              </div>
+              <label class="switch-label">
+                <input type="checkbox" id="user-ai-enabled" switch checked />
+                <span>Enable AI Autofill</span>
+              </label>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="user-ai-provider">AI Provider</label>
+                <select id="user-ai-provider">
+                  <option value="gemini">Google Gemini (generativelanguage.googleapis.com)</option>
+                  <option value="openai">OpenAI (api.openai.com)</option>
+                  <option value="anthropic">Anthropic Claude (api.anthropic.com)</option>
+                  <option value="openrouter">OpenRouter (openrouter.ai)</option>
+                  <option value="custom">Custom (OpenAI-Compatible Endpoint)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="user-ai-model">Model Name</label>
+                <input type="text" id="user-ai-model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini, claude-3-5-haiku-latest" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="user-ai-base-url">Provider Endpoint / Base URL (Optional override or required for Custom)</label>
+              <input type="url" id="user-ai-base-url" placeholder="https://generativelanguage.googleapis.com/v1beta" />
+            </div>
+
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label for="user-ai-api-key">Personal API Key</label>
+                <span id="user-ai-key-badge" class="badge badge-outline">No API key stored</span>
+              </div>
+              <input
+                type="password"
+                id="user-ai-api-key"
+                autocomplete="off"
+                placeholder="Enter new API key (leave blank to keep existing stored key)"
+              />
+            </div>
+
+            <div id="user-ai-test-result" class="view-subtitle hidden" style="margin-bottom: 10px;" aria-live="polite"></div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="submit" id="user-ai-save-btn" class="btn btn-primary">💾 Save AI Config</button>
+                <button type="button" id="user-ai-test-btn" class="btn btn-secondary">🧪 Test AI Connection</button>
+              </div>
+              <button type="button" id="user-ai-clear-btn" class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑 Clear Stored API Key</button>
+            </div>
+          </form>
+
+          <!-- Card 2: User Account & Security -->
+          <form id="user-profile-form" class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>👤 User Account &amp; Password</h3>
+                <p>Update your display name or change your account password.</p>
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="user-profile-displayname">Display Name</label>
+                <input type="text" id="user-profile-displayname" required />
+              </div>
+              <div class="form-group">
+                <label for="user-profile-password">New Password (leave blank to keep current)</label>
+                <input type="password" id="user-profile-password" autocomplete="new-password" minlength="6" placeholder="Min. 6 characters" />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Profile Changes</button>
+          </form>
         </div>
       </section>
     </main>
@@ -925,100 +1013,6 @@
     </div>
   </div>
 
-  <!-- PERSONAL AI KEY & ACCOUNT SETTINGS MODAL -->
-  <div id="user-settings-modal" class="modal-backdrop hidden">
-    <div class="modal-panel modal-lg">
-      <div class="modal-header">
-        <div>
-          <h3>🔑 Personal AI Key &amp; Account Settings</h3>
-          <p class="subtitle" style="margin-top: 2px;">Configure your encrypted personal AI provider for smart kit extraction</p>
-        </div>
-        <button type="button" class="modal-close" data-close-modal="user-settings-modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <!-- Personal AI Provider Section -->
-        <form id="user-ai-settings-form" class="admin-card" style="margin-bottom: 18px;">
-          <div class="admin-card-header">
-            <div>
-              <h4>✨ Personal AI Extraction Assistant</h4>
-              <p>Your API Key is encrypted at rest with AES-256-GCM and strictly isolated to your account (<strong id="user-ai-account-handle">@user</strong>). No other user or admin can view or use your key.</p>
-            </div>
-            <label class="switch-label">
-              <input type="checkbox" id="user-ai-enabled" switch checked />
-              <span>Enable AI Autofill</span>
-            </label>
-          </div>
-
-          <div class="form-row-2">
-            <div class="form-group">
-              <label for="user-ai-provider">AI Provider</label>
-              <select id="user-ai-provider">
-                <option value="gemini">Google Gemini (generativelanguage.googleapis.com)</option>
-                <option value="openai">OpenAI (api.openai.com)</option>
-                <option value="anthropic">Anthropic Claude (api.anthropic.com)</option>
-                <option value="openrouter">OpenRouter (openrouter.ai)</option>
-                <option value="custom">Custom (OpenAI-Compatible Endpoint)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="user-ai-model">Model Name</label>
-              <input type="text" id="user-ai-model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini, claude-3-5-haiku-latest" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="user-ai-base-url">Provider Endpoint / Base URL (Optional override or required for Custom)</label>
-            <input type="url" id="user-ai-base-url" placeholder="https://generativelanguage.googleapis.com/v1beta" />
-          </div>
-
-          <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label for="user-ai-api-key">Personal API Key</label>
-              <span id="user-ai-key-badge" class="badge badge-outline">No API key stored</span>
-            </div>
-            <input
-              type="password"
-              id="user-ai-api-key"
-              autocomplete="off"
-              placeholder="Enter new API key (leave blank to keep existing stored key)"
-            />
-          </div>
-
-          <div id="user-ai-test-result" class="view-subtitle hidden" style="margin-bottom: 10px;" aria-live="polite"></div>
-
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="submit" id="user-ai-save-btn" class="btn btn-primary">💾 Save AI Config</button>
-              <button type="button" id="user-ai-test-btn" class="btn btn-secondary">🧪 Test AI Connection</button>
-            </div>
-            <button type="button" id="user-ai-clear-btn" class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑 Clear Stored API Key</button>
-          </div>
-        </form>
-
-        <!-- Account Display Name & Password Section -->
-        <form id="user-profile-form" class="admin-card">
-          <div class="admin-card-header">
-            <div>
-              <h4>👤 Account Profile &amp; Password</h4>
-              <p>Update your display name or change your account password.</p>
-            </div>
-          </div>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label for="user-profile-displayname">Display Name</label>
-              <input type="text" id="user-profile-displayname" required />
-            </div>
-            <div class="form-group">
-              <label for="user-profile-password">New Password (leave blank to keep current)</label>
-              <input type="password" id="user-profile-password" autocomplete="new-password" minlength="6" placeholder="Min. 6 characters" />
-            </div>
-          </div>
-          <button type="submit" class="btn btn-secondary">Update Profile</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <script src="/app.js?v=6"></script>
+  <script src="/app.js?v=7"></script>
 </body>
 </html>

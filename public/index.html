@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
   <title>KitCatalogue — Building Kits &amp; Mecha Hangar</title>
-  <link rel="stylesheet" href="/styles.css?v=4" />
+  <link rel="stylesheet" href="/styles.css?v=6" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M50 14 L82 32 L82 68 L50 86 L18 68 L18 32 Z%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2212%22 fill=%22%23f59e0b%22/></svg>" />
 </head>
 <body>
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- PUBLIC SHOWCASE READ-ONLY BANNER -->
   <div id="showcase-top-banner" class="showcase-top-banner hidden">
@@ -46,7 +47,7 @@
       <form id="auth-form" class="auth-form">
         <div class="form-group">
           <label for="auth-username">Username</label>
-          <input type="text" id="auth-username" required autocomplete="username" placeholder="e.g. amuro_ray" />
+          <input type="text" id="auth-username" required autocomplete="username" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="e.g. amuro_ray" />
         </div>
         <div id="auth-displayname-group" class="form-group hidden">
           <label for="auth-displayname">Display Name</label>
@@ -56,7 +57,7 @@
           <label for="auth-password">Password</label>
           <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 6 characters" />
         </div>
-        <div id="auth-error" class="form-error hidden"></div>
+        <div id="auth-error" class="form-error hidden" role="alert" aria-live="assertive"></div>
         <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">Sign In</button>
       </form>
     </div>
@@ -291,9 +292,9 @@
           </div>
 
           <div class="admin-card" style="grid-column: 1 / -1;">
-            <h3>Wishlist Price Tracker (Target Price vs. MSRP / Retail)</h3>
+            <h3 id="wishlist-table-heading">Wishlist Price Tracker (Target Price vs. MSRP / Retail)</h3>
             <p class="view-subtitle" style="margin-bottom: 14px;">Track pre-order release dates and compare street prices against MSRP</p>
-            <div class="table-responsive">
+            <div class="table-responsive" tabindex="0" role="region" aria-labelledby="wishlist-table-heading">
               <table class="admin-table">
                 <thead>
                   <tr>
@@ -324,7 +325,7 @@
                 <p>Share a read-only gallery of your collection, stances, and build statuses with friends without requiring them to log in.</p>
               </div>
               <label class="switch-label">
-                <input type="checkbox" id="showcase-enable-toggle" />
+                <input type="checkbox" id="showcase-enable-toggle" switch />
                 <span>Enable Public Showcase</span>
               </label>
             </div>
@@ -379,7 +380,7 @@
                 <p>Control whether new users on your Unraid network can self-register accounts.</p>
               </div>
               <label class="switch-label">
-                <input type="checkbox" id="admin-allow-reg-toggle" />
+                <input type="checkbox" id="admin-allow-reg-toggle" switch />
                 <span>Allow Public Registration</span>
               </label>
             </div>
@@ -407,11 +408,11 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>Registered Users</h3>
+                <h3 id="users-table-heading">Registered Users</h3>
                 <p>First user is Admin by default. Manage roles, reset passwords, or disable accounts.</p>
               </div>
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive" tabindex="0" role="region" aria-labelledby="users-table-heading">
               <table class="admin-table">
                 <thead>
                   <tr>
@@ -828,10 +829,18 @@
 
         <div id="image-search-status" class="view-subtitle" style="margin-bottom: 10px;"></div>
         <div id="image-search-results" class="web-image-results-grid"></div>
+
+        <form id="image-direct-url-form" class="upload-bar-inputs" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+          <div class="form-group" style="flex: 3;">
+            <label for="image-direct-url-input">Or Paste Any Direct Image URL</label>
+            <input type="url" id="image-direct-url-input" placeholder="https://example.com/kit-box-art.jpg" required />
+          </div>
+          <button type="submit" id="image-direct-url-btn" class="btn btn-secondary">+ Import Image URL</button>
+        </form>
       </div>
     </div>
   </div>
 
-  <script src="/app.js?v=4"></script>
+  <script src="/app.js?v=5"></script>
 </body>
 </html>

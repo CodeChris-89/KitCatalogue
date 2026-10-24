@@ -46,11 +46,20 @@ const VALID_STATUSES = [
 ];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
+// Standard companion security headers (modern-web-guidance)
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+};
+
 function sendJson(res, statusCode, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
+    ...SECURITY_HEADERS,
     ...extraHeaders
   });
   res.end(body);
@@ -205,7 +214,8 @@ async function handleApi(req, res, urlObj) {
     const ext = path.extname(photoRow.filename).toLowerCase();
     res.writeHead(200, {
       'Content-Type': photoRow.mime_type || MIME_TYPES[ext] || 'image/jpeg',
-      'Cache-Control': 'private, max-age=86400'
+      'Cache-Control': 'private, max-age=86400',
+      ...SECURITY_HEADERS
     });
     fs.createReadStream(filePath).pipe(res);
     return;
@@ -251,7 +261,8 @@ async function handleApi(req, res, urlObj) {
     res.writeHead(200, {
       'Content-Type': manualRow.mime_type || MIME_TYPES[ext] || 'application/pdf',
       'Content-Disposition': `inline; filename="${safeName}"`,
-      'Cache-Control': 'private, max-age=86400'
+      'Cache-Control': 'private, max-age=86400',
+      ...SECURITY_HEADERS
     });
     fs.createReadStream(filePath).pipe(res);
     return;
@@ -956,6 +967,7 @@ async function handleApi(req, res, urlObj) {
     }
     try {
       const attached = await attachImageFromUrl(kitId, currentUser.id, imageUrl, {
+        fallbackUrl: String(body.fallback_url || '').trim(),
         stanceName: String(body.stance_name || 'Cover / Box Art').trim(),
         caption: String(body.caption || 'Web search import').trim(),
         isCover: body.is_cover !== false
@@ -1300,7 +1312,8 @@ function serveStatic(req, res, urlObj) {
   res.writeHead(200, {
     'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
     // Always revalidate so UI updates are picked up immediately
-    'Cache-Control': 'no-cache'
+    'Cache-Control': 'no-cache',
+    ...SECURITY_HEADERS
   });
   fs.createReadStream(filePath).pipe(res);
 }

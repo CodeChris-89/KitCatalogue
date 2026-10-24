@@ -154,10 +154,14 @@
   function setAuthMode(mode) {
     state.authMode = mode;
     $('auth-error').classList.add('hidden');
+    const pwdInput = $('auth-password');
     if (mode === 'register') {
       $('tab-register').classList.add('active');
       $('tab-login').classList.remove('active');
       $('auth-displayname-group').classList.remove('hidden');
+      if (pwdInput) {
+        pwdInput.autocomplete = 'new-password';
+      }
       $('auth-submit-btn').textContent = state.needsSetup
         ? 'Create Administrator Account'
         : 'Create Account';
@@ -165,6 +169,9 @@
       $('tab-login').classList.add('active');
       $('tab-register').classList.remove('active');
       $('auth-displayname-group').classList.add('hidden');
+      if (pwdInput) {
+        pwdInput.autocomplete = 'current-password';
+      }
       $('auth-submit-btn').textContent = 'Sign In';
     }
   }
@@ -780,6 +787,7 @@
               method: 'POST',
               body: {
                 image_url: chosen.image || chosen.thumbnail,
+                fallback_url: chosen.thumbnail || '',
                 stance_name: $('image-search-stance').value.trim() || 'Cover / Box Art',
                 caption: chosen.title || 'Web search import',
                 is_cover: $('image-search-cover').checked
@@ -1596,6 +1604,38 @@
       if (q) performWebImageSearch(q);
     });
 
+    $('image-direct-url-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!state.activeKitId) return;
+      const directUrl = $('image-direct-url-input').value.trim();
+      if (!directUrl) return;
+
+      const btn = $('image-direct-url-btn');
+      btn.disabled = true;
+      btn.textContent = 'Importing...';
+      try {
+        const res = await api(`/api/kits/${state.activeKitId}/photos/from-url`, {
+          method: 'POST',
+          body: {
+            image_url: directUrl,
+            stance_name: $('image-search-stance').value.trim() || 'Cover / Box Art',
+            caption: 'Direct URL import',
+            is_cover: $('image-search-cover').checked
+          }
+        });
+        replaceKitInState(res.kit);
+        renderKitDetailModal(res.kit);
+        $('image-direct-url-form').reset();
+        $('image-search-modal').classList.add('hidden');
+        showToast('Image imported from URL!', 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '+ Import Image URL';
+      }
+    });
+
     // IDEA 6: PORTABILITY, BACKUP & PUBLIC SHOWCASE EVENTS
     $('showcase-enable-toggle').addEventListener('change', async (e) => {
       try {
@@ -1760,6 +1800,27 @@
     $('lightbox-modal').addEventListener('click', (e) => {
       if (e.target === $('lightbox-modal')) {
         $('lightbox-modal').classList.add('hidden');
+      }
+    });
+
+    // Light-dismiss support for modal dialogs (clicking outside the panel)
+    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          backdrop.classList.add('hidden');
+        }
+      });
+    });
+
+    // Native Esc key to dismiss the topmost modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modals = Array.from(document.querySelectorAll('.modal-backdrop:not(.hidden)'));
+        if (modals.length > 0) {
+          // Close the last/topmost modal in the DOM
+          const topModal = modals[modals.length - 1];
+          topModal.classList.add('hidden');
+        }
       }
     });
   }

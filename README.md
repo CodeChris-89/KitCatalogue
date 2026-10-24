@@ -1,9 +1,9 @@
-# KitCatalogue — Building Kits & Mecha Hangar (Unraid / Docker)
+# KitCatalogue — Building Kits & Mecha Hangar (Docker / Self-Hosted)
 
 > [!NOTE]
 > **AI Disclosure:** This application was extensively built and architected using Generative AI (Antigravity with Google Gemini & Claude models) in collaboration with the repository owner.
 
-A self-hosted web application for cataloguing **Building Kits** (Gundam / Gunpla, Moshow Toys, Book Nooks, 30 Minutes Missions, Zoids, Kotobukiya, and scale models). Designed to run as a single, zero-external-dependency Docker container on **Unraid** with **Docker Compose**.
+A self-hosted web application for cataloguing **Building Kits** (Gundam / Gunpla, Moshow Toys, Book Nooks, 30 Minutes Missions, Zoids, Kotobukiya, and scale models). Designed to run anywhere as a single, zero-external-dependency container with **Docker Compose**.
 
 ## Key Features
 
@@ -15,26 +15,34 @@ A self-hosted web application for cataloguing **Building Kits** (Gundam / Gunpla
   - On first startup, the initial registration screen informs you that the **first registered user automatically becomes the Server Administrator**.
   - Each user gets a private collection and wishlist.
   - Administrators can toggle public registration on/off, create accounts directly, promote/demote admins, disable accounts, or remove users.
-- **Unraid Ready**: Supports `PUID` (`99`) and `PGID` (`100`) out of the box and persists the SQLite WAL database, stance photos, and PDF manuals in a single `/data` volume (`/mnt/user/appdata/kit-catalogue`).
+- **Self-Hosting Anywhere**: Runs on any Docker-capable system (Linux, macOS, Windows, VPS, TrueNAS, Synology, or Unraid). Configurable user permissions via `PUID`/`PGID` (default `1000:1000`) and stores the SQLite database, photos, and manuals in a single `/data` mount.
 
 ---
 
-## Quick Start with Docker Compose (Unraid or Standard Linux)
+## Quick Start with Docker Compose
 
-1. Optional: copy `.env.example` to `.env` and adjust the port or Unraid appdata path:
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/CodeChris-89/KitCatalogue.git
+   cd KitCatalogue
+   ```
+
+2. (Optional) Copy `.env.example` to `.env` to customize your port, data directory, or UID/GID permissions:
    ```bash
    cp .env.example .env
    ```
-2. Start the container with Docker Compose:
+
+3. Start the container with Docker Compose:
    ```bash
    docker compose up -d --build
    ```
-3. Open `http://<YOUR-UNRAID-IP>:3000` in your browser and register your first account (which automatically becomes **Admin**).
 
-### Unraid Compose Manager / Docker XML Template
+4. Open `http://localhost:3000` (or `http://<SERVER-IP>:3000`) in your browser and register your account (the first registered user automatically becomes **Admin**).
 
-- **Docker Compose Manager Plugin**: Point your stack to [docker-compose.yml](docker-compose.yml). By default, it includes Unraid WebUI labels (`net.unraid.docker.webui`).
-- **Unraid Native Template**: An XML template is also included at [unraid/my-KitCatalogue.xml](unraid/my-KitCatalogue.xml), which can be copied to `/boot/config/plugins/dockerMan/templates-user/` on your Unraid flash drive.
+### Unraid or Custom NAS Notes
+
+- For Unraid users, standard permissions can be set via `.env` (`PUID=99`, `PGID=100`, `DATA_PATH=/mnt/user/appdata/kit-catalogue`).
+- An XML template for Unraid's Docker Manager is optionally available at [unraid/my-KitCatalogue.xml](unraid/my-KitCatalogue.xml).
 
 ---
 

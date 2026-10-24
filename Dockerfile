@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-# su-exec and tzdata are helpful on Unraid for PUID/PGID and timezone support
+# su-exec and tzdata for customizable user permissions (PUID/PGID) and timezone support
 RUN apk add --no-cache su-exec tzdata
 
 WORKDIR /app
@@ -15,8 +15,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /data
 ENV NODE_ENV=production \
     PORT=3000 \
     DATA_DIR=/data \
-    PUID=99 \
-    PGID=100 \
+    PUID=1000 \
+    PGID=1000 \
     TZ=UTC
 
 VOLUME ["/data"]

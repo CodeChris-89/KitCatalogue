@@ -210,7 +210,7 @@ textarea:focus {
 
 .auth-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 520px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -1587,6 +1587,67 @@ input[type="checkbox"][switch]:focus-visible {
   height: 46px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+/* FEATURE SUMMARY & AI VIBES DISCLAIMER */
+.auth-features-summary {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.auth-features-summary h4 {
+  font-size: 0.88rem;
+  color: var(--accent-sky);
+  margin-bottom: 10px;
+}
+
+.auth-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.auth-features-list li {
+  line-height: 1.35;
+}
+
+.auth-features-list strong {
+  color: var(--text-primary);
+}
+
+.ai-vibes-disclaimer {
+  margin-top: 18px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.ai-vibes-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #f59e0b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.ai-vibes-disclaimer p {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.ai-vibes-disclaimer strong {
+  color: #fbbf24;
 }
 
 @media (max-width: 900px) {

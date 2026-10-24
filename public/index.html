@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="Self-hosted building kit &amp; scale model catalogue (Gundam, Moshow, Book Nooks, Zoids). AI generated, pure vibes." />
   <title>KitCatalogue — Building Kits &amp; Mecha Hangar</title>
-  <link rel="stylesheet" href="/styles.css?v=6" />
+  <link rel="stylesheet" href="/styles.css?v=8" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M50 14 L82 32 L82 68 L50 86 L18 68 L18 32 Z%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2212%22 fill=%22%23f59e0b%22/></svg>" />
 </head>
 <body>
@@ -60,6 +61,30 @@
         <div id="auth-error" class="form-error hidden" role="alert" aria-live="assertive"></div>
         <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">Sign In</button>
       </form>
+
+      <!-- FEATURE HIGHLIGHTS & AI PURE VIBES DISCLAIMER -->
+      <div class="auth-features-summary">
+        <h4>⚡ Key Hangar Features</h4>
+        <ul class="auth-features-list">
+          <li>📦 <strong>Owned &amp; Wishlist Hangar:</strong> Track backlog builds, grail kits &amp; wishlist transfers</li>
+          <li>🛠️ <strong>7-Stage Build Pipeline:</strong> Backlog, In Progress, Panel Lining, Painting to Finished</li>
+          <li>✨ <strong>Smart Kit Autofill:</strong> Instant metadata lookup via Gundam Wiki, web store scraper &amp; AI</li>
+          <li>📸 <strong>Stance &amp; Action Galleries:</strong> Fullscreen lightbox with box art selector &amp; custom pose tags</li>
+          <li>📖 <strong>In-App PDF Manuals:</strong> Built-in previewer &amp; quick reference to Dalong, Scalemates &amp; Mech9</li>
+          <li>📍 <strong>Shelves &amp; Parts Indexing:</strong> Display locations &amp; spare runners/parts box index</li>
+          <li>📊 <strong>Analytics &amp; Cost Tracker:</strong> Brand spend, grade distribution &amp; wishlist MSRP deals</li>
+          <li>💾 <strong>Full Portability &amp; Showcase:</strong> Standalone JSON backup with base64 photos &amp; read-only link</li>
+        </ul>
+      </div>
+
+      <div class="ai-vibes-disclaimer">
+        <div class="ai-vibes-badge">🤖 AI GENERATED • NOT AUDITED BY EXPERTS • PURE VIBES</div>
+        <p>
+          KitCatalogue was built and architected using Generative AI (Antigravity with Google Gemini &amp; Claude models).
+          The code has <strong>not been reviewed or audited by human software engineering or security experts</strong>.
+          Pure vibes. Run self-hosted at your own discretion.
+        </p>
+      </div>
     </div>
   </div>
 
@@ -538,6 +563,37 @@
             </div>
             <button type="submit" class="btn btn-primary">Save Profile Changes</button>
           </form>
+
+          <!-- Card 3: About KitCatalogue & AI Pure Vibes Disclaimer -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>ℹ️ About KitCatalogue &amp; AI Codebase Disclosure</h3>
+                <p>Complete feature architecture &amp; Generative AI development transparency.</p>
+              </div>
+            </div>
+            <div class="auth-features-summary" style="margin-top: 0; border: none; padding: 0;">
+              <ul class="auth-features-list">
+                <li>📦 <strong>Catalogue Management:</strong> Owned collection vs. wishlist with instant status and priority updates</li>
+                <li>🛠️ <strong>Build Workflow:</strong> 7 statuses (Backlog, Building, Panel Lining &amp; Decals, Painting &amp; Topcoat, Finished, On Hold, Wishlist)</li>
+                <li>✨ <strong>Smart Kit Autofill:</strong> Multi-source extraction from Gundam Wiki, web search, JSON-LD store scraper, and personal encrypted AI assistant</li>
+                <li>📸 <strong>Action Stances Gallery:</strong> Custom stance naming, multiple photos per kit, and cover selection</li>
+                <li>📖 <strong>Building Manuals:</strong> PDF file uploads with embedded previewer and external bookmark links</li>
+                <li>📍 <strong>Physical Organization:</strong> Display location shelf assignment and spare runner box indexing</li>
+                <li>📊 <strong>Hangar Analytics:</strong> Cost and retail MSRP comparison, completion metrics, and category charts</li>
+                <li>💾 <strong>Portability &amp; Showcase:</strong> One-click JSON backup with embedded media, CSV import/export, and tokenized read-only gallery</li>
+                <li>🔒 <strong>Personal AI Isolation:</strong> Per-user AES-256-GCM encryption supporting Google Gemini, OpenAI, Anthropic Claude, OpenRouter, and custom endpoints</li>
+              </ul>
+            </div>
+            <div class="ai-vibes-disclaimer" style="margin-top: 14px;">
+              <div class="ai-vibes-badge">🤖 AI GENERATED • NOT AUDITED BY EXPERTS • PURE VIBES</div>
+              <p>
+                KitCatalogue was extensively built and architected using Generative AI (Google Gemini &amp; Claude models via Antigravity).
+                The codebase has <strong>not been reviewed or audited by human software engineering or cybersecurity experts</strong>.
+                Built for fun, scale modeling enthusiasm, and hobby tracking — pure vibes.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -1013,6 +1069,6 @@
     </div>
   </div>
 
-  <script src="/app.js?v=7"></script>
+  <script src="/app.js?v=8"></script>
 </body>
 </html>

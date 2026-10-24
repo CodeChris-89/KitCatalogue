@@ -619,8 +619,8 @@
 
     if (navKey === 'admin') {
       $('admin-view').classList.remove('hidden');
-      $('view-title').textContent = 'User Management & Server Settings';
-      $('view-subtitle').textContent = 'Manage user accounts, roles, and signup permissions';
+      $('view-title').textContent = 'Admin Settings';
+      $('view-subtitle').textContent = 'Branding, server registration policy, and user management';
       loadAdminUsers();
       return;
     }

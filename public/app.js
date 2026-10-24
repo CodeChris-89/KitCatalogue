@@ -709,8 +709,262 @@
     if (kit) {
       $('kit-auto-crawl-group').classList.add('hidden');
     }
+
+    // Reset Smart Lookup panel
+    if ($('kit-smart-lookup-input')) $('kit-smart-lookup-input').value = '';
+    if ($('kit-autofill-image-url')) $('kit-autofill-image-url').value = '';
+    if ($('kit-autofill-thumb-url')) $('kit-autofill-thumb-url').value = '';
+    if ($('kit-lookup-status')) {
+      $('kit-lookup-status').textContent = '';
+      $('kit-lookup-status').classList.add('hidden');
+    }
+    if ($('kit-lookup-results')) {
+      $('kit-lookup-results').innerHTML = '';
+      $('kit-lookup-results').classList.add('hidden');
+    }
+    if ($('kit-autofill-cover-preview')) {
+      $('kit-autofill-cover-preview').classList.add('hidden');
+    }
+    updateAiStatusIndicator();
+
     showModal('kit-form-modal');
     $('kit-name').focus();
+  }
+
+  // SMART KIT LOOKUP, AUTOFILL & PERSONAL AI CONFIGURATION
+  const AI_PROVIDER_DEFAULTS = {
+    gemini: {
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      model: 'gemini-2.5-flash'
+    },
+    openai: {
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o-mini'
+    },
+    anthropic: {
+      baseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-3-5-haiku-latest'
+    },
+    openrouter: {
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model: 'google/gemini-2.5-flash'
+    },
+    custom: {
+      baseUrl: 'https://api.openai.com/v1',
+      model: ''
+    }
+  };
+
+  function updateAiStatusIndicator() {
+    const label = $('kit-ai-status-label');
+    if (!label) return;
+    const ai = state.user?.aiSettings;
+    if (ai && ai.hasApiKey && ai.enabled) {
+      label.textContent = `AI Active (${ai.provider.toUpperCase()})`;
+    } else if (ai && ai.hasApiKey) {
+      label.textContent = `AI Paused (${ai.provider.toUpperCase()})`;
+    } else {
+      label.textContent = 'Configure AI Key';
+    }
+  }
+
+  async function openUserSettingsModal() {
+    if (!state.user) return;
+    try {
+      const res = await api('/api/user/ai-settings');
+      const ai = res.aiSettings;
+      state.user.aiSettings = ai;
+      updateAiStatusIndicator();
+
+      $('user-ai-account-handle').textContent = `@${state.user.username}`;
+      $('user-ai-enabled').checked = Boolean(ai.enabled);
+      $('user-ai-provider').value = ai.provider || 'gemini';
+      $('user-ai-model').value = ai.model || AI_PROVIDER_DEFAULTS[ai.provider || 'gemini']?.model || '';
+      $('user-ai-base-url').value = ai.baseUrl || '';
+      $('user-ai-base-url').placeholder =
+        AI_PROVIDER_DEFAULTS[ai.provider || 'gemini']?.baseUrl || 'https://...';
+      $('user-ai-api-key').value = '';
+
+      const keyBadge = $('user-ai-key-badge');
+      if (ai.hasApiKey) {
+        keyBadge.textContent = `Encrypted Key Saved (${ai.maskedKey})`;
+        keyBadge.className = 'badge badge-cyan';
+      } else {
+        keyBadge.textContent = 'No API key stored';
+        keyBadge.className = 'badge badge-outline';
+      }
+
+      $('user-ai-test-result').classList.add('hidden');
+      $('user-profile-displayname').value = state.user.displayName || state.user.username;
+      $('user-profile-password').value = '';
+
+      showModal('user-settings-modal');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  function applyAutofillToKitForm(kitData, sourceName = '') {
+    if (!kitData) return;
+
+    if (kitData.name) $('kit-name').value = kitData.name;
+    if (kitData.category) $('kit-category').value = kitData.category;
+    if (kitData.brand) $('kit-brand').value = kitData.brand;
+    if (kitData.gradeScale) $('kit-grade-scale').value = kitData.gradeScale;
+    if (kitData.series) $('kit-series').value = kitData.series;
+    if (kitData.modelNumber) $('kit-model-number').value = kitData.modelNumber;
+    if (kitData.retailPrice !== null && kitData.retailPrice !== undefined && kitData.retailPrice !== '') {
+      $('kit-retail-price').value = kitData.retailPrice;
+    }
+    if (kitData.currency) $('kit-currency').value = kitData.currency;
+    if (kitData.releaseDate) $('kit-release-date').value = kitData.releaseDate;
+    if (kitData.storeUrl || kitData.sourceUrl) {
+      $('kit-store-url').value = kitData.storeUrl || kitData.sourceUrl;
+    }
+    if (kitData.notes && !$('kit-notes').value.trim()) {
+      $('kit-notes').value = kitData.notes;
+    }
+
+    const imgUrl = kitData.imageUrl || '';
+    const thumbUrl = kitData.thumbnailUrl || imgUrl;
+    if (imgUrl) {
+      $('kit-autofill-image-url').value = imgUrl;
+      $('kit-autofill-thumb-url').value = thumbUrl;
+      $('kit-autofill-cover-img').src = thumbUrl;
+      $('kit-autofill-cover-preview').classList.remove('hidden');
+    }
+
+    if (sourceName) {
+      showToast(`Autofilled from ${sourceName}!`, 'success');
+    }
+  }
+
+  async function performSmartKitSearch() {
+    const input = $('kit-smart-lookup-input');
+    const q = (input.value || $('kit-name').value || '').trim();
+    if (!q) {
+      showToast('Enter a kit name, model code, barcode, or URL first.', 'error');
+      input.focus();
+      return;
+    }
+
+    // If user pasted a direct URL, run the deep extractor directly
+    if (/^https?:\/\//i.test(q)) {
+      return performSmartKitExtract({ url: q });
+    }
+
+    const statusEl = $('kit-lookup-status');
+    const resultsEl = $('kit-lookup-results');
+    const btn = $('kit-smart-search-btn');
+
+    statusEl.textContent = `Searching KitCatalogue DB, Gundam Wiki & Web for "${q}"...`;
+    statusEl.classList.remove('hidden');
+    resultsEl.innerHTML = '';
+    resultsEl.classList.add('hidden');
+    btn.disabled = true;
+
+    try {
+      const data = await api(`/api/kits/lookup?q=${encodeURIComponent(q)}`);
+      const results = data.results || [];
+      if (!results.length) {
+        statusEl.textContent = `No direct database matches for "${q}". Click "⚡ Smart Fill" to run heuristic / AI extraction.`;
+        return;
+      }
+
+      statusEl.textContent = `Found ${results.length} candidate(s) — click any match to autofill form fields:`;
+      resultsEl.classList.remove('hidden');
+
+      resultsEl.innerHTML = results
+        .map(
+          (r, idx) => `
+          <div class="smart-lookup-item">
+            ${
+              r.thumbnailUrl || r.imageUrl
+                ? `<img class="smart-lookup-thumb" src="${escapeHtml(r.thumbnailUrl || r.imageUrl)}" alt="" loading="lazy" />`
+                : `<div class="smart-lookup-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🤖</div>`
+            }
+            <div class="smart-lookup-meta">
+              <strong>${escapeHtml(r.name)}</strong>
+              <div class="smart-lookup-badges">
+                ${r.brand ? `<span>🏭 ${escapeHtml(r.brand)}</span>` : ''}
+                ${r.gradeScale ? `<span>📏 ${escapeHtml(r.gradeScale)}</span>` : ''}
+                ${r.modelNumber ? `<span>🔢 ${escapeHtml(r.modelNumber)}</span>` : ''}
+                ${r.series ? `<span>🎬 ${escapeHtml(r.series)}</span>` : ''}
+                ${r.retailPrice ? `<span>💰 ${escapeHtml(String(r.retailPrice))} ${escapeHtml(r.currency || '')}</span>` : ''}
+                <span class="badge badge-outline" style="font-size:0.68rem;">${escapeHtml(r.sourceName || 'Web')}</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" data-pick-candidate="${idx}">⬇ Autofill</button>
+          </div>
+        `
+        )
+        .join('');
+
+      resultsEl.querySelectorAll('[data-pick-candidate]').forEach((pickBtn) => {
+        pickBtn.addEventListener('click', async () => {
+          const candidate = results[Number(pickBtn.dataset.pickCandidate)];
+          applyAutofillToKitForm(candidate, candidate.sourceName || 'Lookup');
+
+          // If user has personal AI enabled, refine the selected candidate with AI
+          if (state.user?.aiSettings?.enabled && state.user?.aiSettings?.hasApiKey) {
+            await performSmartKitExtract({ candidate, query: q, silent: false });
+          }
+        });
+      });
+    } catch (err) {
+      statusEl.textContent = `Lookup error: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function performSmartKitExtract({ url = '', query = '', candidate = null, silent = false } = {}) {
+    const rawInput = ($('kit-smart-lookup-input').value || $('kit-name').value || '').trim();
+    const targetUrl = url || (/^https?:\/\//i.test(rawInput) ? rawInput : '');
+    const targetQuery = query || rawInput;
+
+    if (!targetUrl && !targetQuery && !candidate) {
+      showToast('Type a kit name, barcode, or paste a store/wiki URL first.', 'error');
+      $('kit-smart-lookup-input').focus();
+      return;
+    }
+
+    const statusEl = $('kit-lookup-status');
+    const extractBtn = $('kit-smart-extract-btn');
+    extractBtn.disabled = true;
+    const origText = extractBtn.textContent;
+    extractBtn.textContent = '⏳ Extracting...';
+
+    const aiActive = Boolean(state.user?.aiSettings?.enabled && state.user?.aiSettings?.hasApiKey);
+    statusEl.textContent = aiActive
+      ? 'Extracting metadata & consulting your personal AI assistant...'
+      : 'Extracting kit metadata from web & database sources...';
+    statusEl.classList.remove('hidden');
+
+    try {
+      const res = await api('/api/kits/extract', {
+        method: 'POST',
+        body: {
+          url: targetUrl,
+          query: targetQuery,
+          candidate,
+          useAi: true
+        }
+      });
+
+      applyAutofillToKitForm(res.kit, silent ? '' : res.source);
+      if (res.aiError) {
+        statusEl.textContent = `Autofilled via ${res.source} (Note: AI provider returned: ${res.aiError})`;
+      } else {
+        statusEl.textContent = `✓ Autofilled via ${res.source}`;
+      }
+    } catch (err) {
+      statusEl.textContent = `Extraction failed: ${err.message}`;
+      showToast(err.message, 'error');
+    } finally {
+      extractBtn.disabled = false;
+      extractBtn.textContent = origText;
+    }
   }
 
   // IDEA 5: GENERATE QUICK LOOKUP LINKS (Dalong, 1999.co.jp HobbySearch, Scalemates, Mech9, Hpoi)
@@ -1385,12 +1639,30 @@
         started_date: $('kit-started-date').value,
         completed_date: $('kit-completed-date').value,
         notes: $('kit-notes').value.trim(),
+        cover_image_url: $('kit-autofill-image-url') ? $('kit-autofill-image-url').value.trim() : '',
+        cover_thumbnail_url: $('kit-autofill-thumb-url') ? $('kit-autofill-thumb-url').value.trim() : '',
         auto_crawl_image: $('kit-auto-crawl') ? $('kit-auto-crawl').checked : false
       };
 
+      const saveBtn = $('kit-save-btn');
+      saveBtn.disabled = true;
       try {
         if (id) {
-          const res = await api(`/api/kits/${id}`, { method: 'PUT', body: payload });
+          let res = await api(`/api/kits/${id}`, { method: 'PUT', body: payload });
+          if (payload.cover_image_url) {
+            try {
+              res = await api(`/api/kits/${id}/photos/from-url`, {
+                method: 'POST',
+                body: {
+                  image_url: payload.cover_image_url,
+                  thumbnail_url: payload.cover_thumbnail_url,
+                  stance_name: 'Box Art / Web Cover',
+                  caption: `Autofilled: ${payload.name}`,
+                  is_cover: true
+                }
+              });
+            } catch (_) {}
+          }
           replaceKitInState(res.kit);
           $('kit-form-modal').classList.add('hidden');
           if (state.activeKitId === Number(id)) {
@@ -1404,6 +1676,134 @@
           $('kit-form-modal').classList.add('hidden');
           showToast('Kit added to your catalogue!', 'success');
         }
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    // Smart Kit Lookup & Personal AI Settings Events
+    $('kit-smart-search-btn')?.addEventListener('click', () => performSmartKitSearch());
+    $('kit-smart-extract-btn')?.addEventListener('click', () => performSmartKitExtract());
+    $('kit-smart-lookup-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSmartKitSearch();
+      }
+    });
+    $('kit-autofill-cover-clear')?.addEventListener('click', () => {
+      $('kit-autofill-image-url').value = '';
+      $('kit-autofill-thumb-url').value = '';
+      $('kit-autofill-cover-preview').classList.add('hidden');
+    });
+
+    $('open-user-settings-btn')?.addEventListener('click', () => openUserSettingsModal());
+    $('user-chip-trigger')?.addEventListener('click', () => openUserSettingsModal());
+    $('kit-open-ai-config-btn')?.addEventListener('click', () => openUserSettingsModal());
+
+    $('user-ai-provider')?.addEventListener('change', (e) => {
+      const prov = e.target.value;
+      const defaults = AI_PROVIDER_DEFAULTS[prov] || { baseUrl: '', model: '' };
+      $('user-ai-base-url').placeholder = defaults.baseUrl || 'https://...';
+      $('user-ai-model').value = defaults.model || '';
+    });
+
+    $('user-ai-settings-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = $('user-ai-save-btn');
+      saveBtn.disabled = true;
+      try {
+        const res = await api('/api/user/ai-settings', {
+          method: 'PUT',
+          body: {
+            provider: $('user-ai-provider').value,
+            model: $('user-ai-model').value.trim(),
+            baseUrl: $('user-ai-base-url').value.trim(),
+            enabled: $('user-ai-enabled').checked,
+            apiKey: $('user-ai-api-key').value.trim()
+          }
+        });
+        state.user.aiSettings = res.aiSettings;
+        $('user-ai-api-key').value = '';
+        const keyBadge = $('user-ai-key-badge');
+        if (res.aiSettings.hasApiKey) {
+          keyBadge.textContent = `Encrypted Key Saved (${res.aiSettings.maskedKey})`;
+          keyBadge.className = 'badge badge-cyan';
+        } else {
+          keyBadge.textContent = 'No API key stored';
+          keyBadge.className = 'badge badge-outline';
+        }
+        updateAiStatusIndicator();
+        showToast('Personal AI configuration saved securely!', 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    $('user-ai-test-btn')?.addEventListener('click', async () => {
+      const btn = $('user-ai-test-btn');
+      const statusEl = $('user-ai-test-result');
+      btn.disabled = true;
+      btn.textContent = '⏳ Testing...';
+      statusEl.textContent = 'Sending test extraction prompt to your AI provider...';
+      statusEl.classList.remove('hidden');
+
+      try {
+        const res = await api('/api/user/ai-settings/test', {
+          method: 'POST',
+          body: {
+            provider: $('user-ai-provider').value,
+            model: $('user-ai-model').value.trim(),
+            baseUrl: $('user-ai-base-url').value.trim(),
+            apiKey: $('user-ai-api-key').value.trim()
+          }
+        });
+        statusEl.textContent = `✓ Connection verified (${res.provider} — ${res.model})! Sample parsed: "${res.sample?.name || 'OK'}" (${res.sample?.gradeScale || ''})`;
+        showToast('AI connection verified!', 'success');
+      } catch (err) {
+        statusEl.textContent = `✗ Connection failed: ${err.message}`;
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🧪 Test AI Connection';
+      }
+    });
+
+    $('user-ai-clear-btn')?.addEventListener('click', async () => {
+      try {
+        const res = await api('/api/user/ai-settings', {
+          method: 'PUT',
+          body: { clearApiKey: true, enabled: false }
+        });
+        state.user.aiSettings = res.aiSettings;
+        $('user-ai-api-key').value = '';
+        $('user-ai-enabled').checked = false;
+        const keyBadge = $('user-ai-key-badge');
+        keyBadge.textContent = 'No API key stored';
+        keyBadge.className = 'badge badge-outline';
+        updateAiStatusIndicator();
+        showToast('Stored API key deleted from server.', 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    $('user-profile-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const displayName = $('user-profile-displayname').value.trim();
+        const newPassword = $('user-profile-password').value;
+        await api('/api/auth/profile', {
+          method: 'PUT',
+          body: { displayName, newPassword }
+        });
+        state.user.displayName = displayName;
+        $('user-profile-password').value = '';
+        renderUserSidebar();
+        showToast('Account profile updated!', 'success');
       } catch (err) {
         showToast(err.message, 'error');
       }

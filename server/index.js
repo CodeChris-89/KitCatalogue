@@ -17,6 +17,15 @@ const {
 } = require('./auth');
 const { parseMultipart } = require('./multipart');
 const { searchWebImages, attachImageFromUrl, autoCrawlCoverImage } = require('./websearch');
+const {
+  PROVIDER_DEFAULTS,
+  getUserAiConfigPublic,
+  saveUserAiConfig,
+  lookupKitCandidates,
+  extractKitDetails,
+  callAiForKitExtraction,
+  getUserAiConfigInternal
+} = require('./kitlookup');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -287,7 +296,8 @@ async function handleApi(req, res, urlObj) {
             role: user.role,
             showcaseEnabled: user.showcaseEnabled,
             showcaseToken: user.showcaseToken,
-            createdAt: user.createdAt
+            createdAt: user.createdAt,
+            aiSettings: getUserAiConfigPublic(user.id)
           }
         : null
     });
@@ -429,6 +439,105 @@ async function handleApi(req, res, urlObj) {
       db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, currentUser.id);
     }
     return sendJson(res, 200, { ok: true });
+  }
+
+  // Per-User Encrypted AI Provider & API Key Settings (Isolated to currentUser.id)
+  if (pathname === '/api/user/ai-settings' && method === 'GET') {
+    return sendJson(res, 200, { aiSettings: getUserAiConfigPublic(currentUser.id) });
+  }
+
+  if (pathname === '/api/user/ai-settings' && method === 'PUT') {
+    try {
+      const body = await readJsonBody(req);
+      const updated = saveUserAiConfig(currentUser.id, body);
+      return sendJson(res, 200, { aiSettings: updated });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message || 'Failed to save AI configuration.' });
+    }
+  }
+
+  if (pathname === '/api/user/ai-settings/test' && method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const stored = getUserAiConfigInternal(currentUser.id);
+      const provider = PROVIDER_DEFAULTS[body.provider]
+        ? body.provider
+        : stored?.provider || 'gemini';
+      const apiKey =
+        typeof body.apiKey === 'string' && body.apiKey.trim()
+          ? body.apiKey.trim()
+          : stored?.apiKey || '';
+
+      if (!apiKey) {
+        return sendJson(res, 400, {
+          error: 'No API Key provided or saved for your account.'
+        });
+      }
+
+      const testConfig = {
+        provider,
+        apiKey,
+        baseUrl:
+          body.baseUrl !== undefined
+            ? String(body.baseUrl).trim()
+            : stored?.baseUrl || PROVIDER_DEFAULTS[provider]?.baseUrl || '',
+        model:
+          body.model !== undefined && String(body.model).trim()
+            ? String(body.model).trim()
+            : stored?.model || PROVIDER_DEFAULTS[provider]?.model || ''
+      };
+
+      const sample = await callAiForKitExtraction(
+        testConfig,
+        'RG 1/144 RX-78-2 Gundam Ver. 2.0 by Bandai Spirits'
+      );
+      return sendJson(res, 200, {
+        ok: true,
+        provider: PROVIDER_DEFAULTS[provider]?.name || provider,
+        model: testConfig.model,
+        sample
+      });
+    } catch (err) {
+      return sendJson(res, 400, {
+        error: err.message || 'AI connection test failed.'
+      });
+    }
+  }
+
+  // Smart Kit Autofill: Candidate Lookup (Curated DB + Gundam Wiki API + Web Search)
+  if (pathname === '/api/kits/lookup' && method === 'GET') {
+    const q = (urlObj.searchParams.get('q') || '').trim();
+    if (!q) {
+      return sendJson(res, 400, { error: 'Search query (q) is required.' });
+    }
+    try {
+      const results = await lookupKitCandidates(q);
+      const aiCfg = getUserAiConfigPublic(currentUser.id);
+      return sendJson(res, 200, {
+        results,
+        aiEnabled: Boolean(aiCfg.enabled && aiCfg.hasApiKey),
+        aiProvider: aiCfg.provider
+      });
+    } catch (err) {
+      return sendJson(res, 500, { error: err.message || 'Kit lookup failed.' });
+    }
+  }
+
+  // Smart Kit Autofill: Deep Metadata Extraction (Direct URL JSON-LD/OpenGraph + Optional Personal AI)
+  if (pathname === '/api/kits/extract' && method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const extracted = await extractKitDetails({
+        url: body.url || '',
+        query: body.query || '',
+        candidate: body.candidate || null,
+        userId: currentUser.id,
+        useAi: body.useAi !== false
+      });
+      return sendJson(res, 200, extracted);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message || 'Failed to extract kit metadata.' });
+    }
   }
 
   // Showcase Settings (Enable/Disable or Regenerate Public Showcase Link)
@@ -736,9 +845,25 @@ async function handleApi(req, res, urlObj) {
 
     const newId = Number(result.lastInsertRowid);
 
+    // If a specific cover_image_url was provided via Smart Autofill, try attaching it directly
+    let coverAttached = false;
+    if (body.cover_image_url && String(body.cover_image_url).trim()) {
+      try {
+        await attachImageFromUrl(newId, currentUser.id, String(body.cover_image_url).trim(), {
+          fallbackUrl: String(body.cover_thumbnail_url || '').trim(),
+          stanceName: 'Box Art / Web Cover',
+          caption: `Autofilled: ${name}`,
+          isCover: true
+        });
+        coverAttached = true;
+      } catch (_) {
+        // Fallback to auto-crawl below
+      }
+    }
+
     // Auto-crawl title / box art image from the web if enabled (default: true) and no cover was uploaded yet
     const autoCrawl = body.auto_crawl_image !== false && body.auto_crawl_image !== 'false';
-    if (autoCrawl) {
+    if (!coverAttached && autoCrawl) {
       const searchTerms = [body.brand, body.grade_scale, name, body.model_number]
         .filter(Boolean)
         .join(' ')
@@ -1351,6 +1476,15 @@ if (require.main === module) {
     console.log(`  URL: http://0.0.0.0:${PORT}`);
     console.log(`=================================================`);
   });
+
+  const shutdown = () => {
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections();
+    }
+    server.close(() => process.exit(0));
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 module.exports = { server };

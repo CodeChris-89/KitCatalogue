@@ -115,6 +115,16 @@ function getDb() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS user_ai_settings (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL DEFAULT 'gemini',
+      api_key_encrypted TEXT NOT NULL DEFAULT '',
+      base_url TEXT NOT NULL DEFAULT '',
+      model TEXT NOT NULL DEFAULT '',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_kits_user ON kits(user_id);
     CREATE INDEX IF NOT EXISTS idx_photos_kit ON kit_photos(kit_id);
     CREATE INDEX IF NOT EXISTS idx_manuals_kit ON kit_manuals(kit_id);

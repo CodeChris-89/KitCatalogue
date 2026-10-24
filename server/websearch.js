@@ -296,6 +296,8 @@ async function autoCrawlCoverImage(kitId, userId, query) {
 }
 
 module.exports = {
+  isSafeUrl,
+  USER_AGENT,
   searchWebImages,
   attachImageFromUrl,
   autoCrawlCoverImage

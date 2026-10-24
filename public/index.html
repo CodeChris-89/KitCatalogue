@@ -139,7 +139,7 @@
       </nav>
 
       <div id="sidebar-user-footer" class="sidebar-footer">
-        <div class="user-chip">
+        <div class="user-chip" id="user-chip-trigger" title="Open Personal AI &amp; Account Settings" style="cursor: pointer;">
           <div id="user-avatar" class="user-avatar">U</div>
           <div class="user-meta">
             <div class="user-name-row">
@@ -149,7 +149,10 @@
             <span id="current-user-handle" class="user-handle">@builder</span>
           </div>
         </div>
-        <button type="button" id="logout-btn" class="btn btn-ghost btn-sm" title="Sign Out">Sign Out</button>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button type="button" id="open-user-settings-btn" class="btn btn-ghost btn-sm" title="Personal AI Key &amp; Account Settings">🔑 AI</button>
+          <button type="button" id="logout-btn" class="btn btn-ghost btn-sm" title="Sign Out">Sign Out</button>
+        </div>
       </div>
     </aside>
 
@@ -461,6 +464,40 @@
       </div>
       <form id="kit-form" class="modal-body">
         <input type="hidden" id="kit-id" />
+        <input type="hidden" id="kit-autofill-image-url" />
+        <input type="hidden" id="kit-autofill-thumb-url" />
+
+        <!-- SMART KIT LOOKUP & AUTOFILL BAR -->
+        <div class="smart-lookup-box">
+          <div class="smart-lookup-header">
+            <div>
+              <strong>✨ Smart Kit Lookup &amp; Autofill</strong>
+              <span class="smart-lookup-sub">Search Gundam Wiki &amp; Web Databases, paste a product URL (HLJ, Scalemates, Bandai, Rolife), or use your personal AI key</span>
+            </div>
+            <button type="button" id="kit-open-ai-config-btn" class="btn btn-ghost btn-sm" title="Configure your personal encrypted AI API Key">
+              🔑 <span id="kit-ai-status-label">Configure AI Key</span>
+            </button>
+          </div>
+          <div class="smart-lookup-controls">
+            <input
+              type="text"
+              id="kit-smart-lookup-input"
+              placeholder="Type kit name, model # (e.g. MGEX Strike Freedom, MCT-J02, TGB01), barcode, or paste URL..."
+            />
+            <button type="button" id="kit-smart-search-btn" class="btn btn-secondary">🔍 Search Kits</button>
+            <button type="button" id="kit-smart-extract-btn" class="btn btn-primary" title="Extract directly from URL or autofill using Smart Parser + Personal AI">⚡ Smart Fill</button>
+          </div>
+          <div id="kit-lookup-status" class="smart-lookup-status hidden" aria-live="polite"></div>
+          <div id="kit-lookup-results" class="smart-lookup-results hidden"></div>
+          <div id="kit-autofill-cover-preview" class="smart-cover-preview hidden">
+            <img id="kit-autofill-cover-img" src="" alt="Selected box art" />
+            <div style="flex: 1;">
+              <strong>Queued Cover Image from Lookup</strong>
+              <div class="view-subtitle">Will be automatically attached as cover photo when you save this kit.</div>
+            </div>
+            <button type="button" id="kit-autofill-cover-clear" class="btn btn-ghost btn-sm">Remove</button>
+          </div>
+        </div>
 
         <div class="form-row-2">
           <div class="form-group">
@@ -515,8 +552,14 @@
               <option value="Good Smile / Moderoid"></option>
               <option value="In Era+ / Infinite Dimension"></option>
               <option value="Motor Nuclear"></option>
+              <option value="SNAA"></option>
               <option value="Cutebee"></option>
+              <option value="Tonecheer"></option>
+              <option value="Flame Toys"></option>
+              <option value="Takara Tomy"></option>
               <option value="Tamiya"></option>
+              <option value="Hasegawa"></option>
+              <option value="Meng"></option>
             </datalist>
           </div>
           <div class="form-group">
@@ -528,8 +571,16 @@
               <option value="MG 1/100"></option>
               <option value="MGEX 1/100"></option>
               <option value="PG 1/60"></option>
+              <option value="PG Unleashed 1/60"></option>
               <option value="SD / MGSD"></option>
+              <option value="FM 1/100"></option>
+              <option value="RE/100"></option>
+              <option value="EG 1/144"></option>
+              <option value="30MM 1/144"></option>
               <option value="1/72 Progenitor Effect"></option>
+              <option value="1/72"></option>
+              <option value="1/100"></option>
+              <option value="1/144"></option>
               <option value="Book Nook Standard"></option>
             </datalist>
           </div>
@@ -538,7 +589,24 @@
         <div class="form-row-3">
           <div class="form-group">
             <label for="kit-series">Series / Line</label>
-            <input type="text" id="kit-series" placeholder="e.g. Universal Century, Progenitor Effect, Cyber City" />
+            <input type="text" id="kit-series" list="series-suggestions" placeholder="e.g. Universal Century, Progenitor Effect, Cyber City" />
+            <datalist id="series-suggestions">
+              <option value="Mobile Suit Gundam (0079)"></option>
+              <option value="Mobile Suit Zeta Gundam"></option>
+              <option value="Mobile Suit Gundam: Char's Counterattack"></option>
+              <option value="Mobile Suit Gundam Unicorn"></option>
+              <option value="Mobile Suit Gundam SEED"></option>
+              <option value="Mobile Suit Gundam SEED Destiny"></option>
+              <option value="Mobile Suit Gundam SEED Freedom"></option>
+              <option value="Mobile Suit Gundam: Iron-Blooded Orphans"></option>
+              <option value="Mobile Suit Gundam: The Witch from Mercury"></option>
+              <option value="Mobile Suit Gundam 00"></option>
+              <option value="Mobile Suit Gundam Wing"></option>
+              <option value="Mobile Suit Gundam GQuuuuuuX"></option>
+              <option value="Progenitor Effect"></option>
+              <option value="Zoids Highend Master Model (HMM)"></option>
+              <option value="Armored Core"></option>
+            </datalist>
           </div>
           <div class="form-group">
             <label for="kit-model-number">Model / Box Code</label>
@@ -857,6 +925,100 @@
     </div>
   </div>
 
-  <script src="/app.js?v=5"></script>
+  <!-- PERSONAL AI KEY & ACCOUNT SETTINGS MODAL -->
+  <div id="user-settings-modal" class="modal-backdrop hidden">
+    <div class="modal-panel modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3>🔑 Personal AI Key &amp; Account Settings</h3>
+          <p class="subtitle" style="margin-top: 2px;">Configure your encrypted personal AI provider for smart kit extraction</p>
+        </div>
+        <button type="button" class="modal-close" data-close-modal="user-settings-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Personal AI Provider Section -->
+        <form id="user-ai-settings-form" class="admin-card" style="margin-bottom: 18px;">
+          <div class="admin-card-header">
+            <div>
+              <h4>✨ Personal AI Extraction Assistant</h4>
+              <p>Your API Key is encrypted at rest with AES-256-GCM and strictly isolated to your account (<strong id="user-ai-account-handle">@user</strong>). No other user or admin can view or use your key.</p>
+            </div>
+            <label class="switch-label">
+              <input type="checkbox" id="user-ai-enabled" switch checked />
+              <span>Enable AI Autofill</span>
+            </label>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="user-ai-provider">AI Provider</label>
+              <select id="user-ai-provider">
+                <option value="gemini">Google Gemini (generativelanguage.googleapis.com)</option>
+                <option value="openai">OpenAI (api.openai.com)</option>
+                <option value="anthropic">Anthropic Claude (api.anthropic.com)</option>
+                <option value="openrouter">OpenRouter (openrouter.ai)</option>
+                <option value="custom">Custom (OpenAI-Compatible Endpoint)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="user-ai-model">Model Name</label>
+              <input type="text" id="user-ai-model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini, claude-3-5-haiku-latest" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="user-ai-base-url">Provider Endpoint / Base URL (Optional override or required for Custom)</label>
+            <input type="url" id="user-ai-base-url" placeholder="https://generativelanguage.googleapis.com/v1beta" />
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label for="user-ai-api-key">Personal API Key</label>
+              <span id="user-ai-key-badge" class="badge badge-outline">No API key stored</span>
+            </div>
+            <input
+              type="password"
+              id="user-ai-api-key"
+              autocomplete="off"
+              placeholder="Enter new API key (leave blank to keep existing stored key)"
+            />
+          </div>
+
+          <div id="user-ai-test-result" class="view-subtitle hidden" style="margin-bottom: 10px;" aria-live="polite"></div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="submit" id="user-ai-save-btn" class="btn btn-primary">💾 Save AI Config</button>
+              <button type="button" id="user-ai-test-btn" class="btn btn-secondary">🧪 Test AI Connection</button>
+            </div>
+            <button type="button" id="user-ai-clear-btn" class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑 Clear Stored API Key</button>
+          </div>
+        </form>
+
+        <!-- Account Display Name & Password Section -->
+        <form id="user-profile-form" class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <h4>👤 Account Profile &amp; Password</h4>
+              <p>Update your display name or change your account password.</p>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="user-profile-displayname">Display Name</label>
+              <input type="text" id="user-profile-displayname" required />
+            </div>
+            <div class="form-group">
+              <label for="user-profile-password">New Password (leave blank to keep current)</label>
+              <input type="password" id="user-profile-password" autocomplete="new-password" minlength="6" placeholder="Min. 6 characters" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary">Update Profile</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=6"></script>
 </body>
 </html>

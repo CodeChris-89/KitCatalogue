@@ -233,6 +233,62 @@ async function runTests() {
     assert.strictEqual(res.status, 403, 'Registration should be blocked when disabled by admin');
     console.log('✓ Verified Admin user management, customizable branding tagline & registration lock');
 
+    // 10. Verify Per-User Encrypted AI API Key Isolation & Smart Kit Lookup / Autofill
+    res = await fetch(`${baseUrl}/api/user/ai-settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+      body: JSON.stringify({
+        provider: 'custom',
+        baseUrl: 'https://api.openai.com/v1',
+        model: 'gpt-4o-mini',
+        apiKey: 'sk-super-secret-amuro-key-9876',
+        enabled: true
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const savedAi = await res.json();
+    assert.strictEqual(savedAi.aiSettings.hasApiKey, true);
+    assert.strictEqual(savedAi.aiSettings.maskedKey, '••••••••9876');
+    assert.strictEqual(savedAi.aiSettings.provider, 'custom');
+    assert.ok(
+      !JSON.stringify(savedAi).includes('sk-super-secret-amuro-key'),
+      'Raw API key must never be leaked in HTTP responses'
+    );
+
+    // Ensure User 2 cannot see or access User 1's API key
+    res = await fetch(`${baseUrl}/api/user/ai-settings`, {
+      headers: { Cookie: userCookie }
+    });
+    assert.strictEqual(res.status, 200);
+    const user2Ai = await res.json();
+    assert.strictEqual(user2Ai.aiSettings.hasApiKey, false, 'User 2 must not have access to User 1 AI key');
+    assert.strictEqual(user2Ai.aiSettings.maskedKey, '');
+
+    // Test Smart Kit Lookup
+    res = await fetch(`${baseUrl}/api/kits/lookup?q=${encodeURIComponent('MGEX Strike Freedom')}`, {
+      headers: { Cookie: adminCookie }
+    });
+    assert.strictEqual(res.status, 200);
+    const lookupData = await res.json();
+    assert.ok(lookupData.results.length > 0, 'Should return candidate matches for MGEX Strike Freedom');
+    assert.strictEqual(lookupData.results[0].modelNumber, 'ZGMF-X20A');
+    assert.strictEqual(lookupData.results[0].gradeScale, 'MGEX 1/100');
+
+    // Test Smart Kit Extract (without invoking live external AI key)
+    res = await fetch(`${baseUrl}/api/kits/extract`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: userCookie },
+      body: JSON.stringify({
+        query: 'Rolife Sakura Densya Book Nook TGB01',
+        useAi: false
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const extractData = await res.json();
+    assert.strictEqual(extractData.kit.category, 'Book Nook / Diorama');
+    assert.strictEqual(extractData.kit.modelNumber, 'TGB01');
+    console.log('✓ Verified Per-User AES-256-GCM Encrypted AI Key Isolation & Smart Kit Autofill');
+
     console.log('\nALL SMOKE TESTS PASSED!');
   } finally {
     server.close();

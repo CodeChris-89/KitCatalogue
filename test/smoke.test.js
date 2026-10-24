@@ -204,13 +204,26 @@ async function runTests() {
     assert.strictEqual(importRes.manualsRestored, 1);
     console.log('✓ Verified One-Click Full Backup & Restore (with embedded photos & manuals)');
 
-    // 9. Verify Admin User Management & disabling public registration
+    // 9. Verify Admin User Management, customizable tagline & registration lock
+    // Verify default tagline is not related to Unraid
+    res = await fetch(`${baseUrl}/api/auth/status`);
+    const initialStatus = await res.json();
+    assert.strictEqual(initialStatus.tagline, 'Model Hangar');
+    assert.ok(!initialStatus.tagline.toLowerCase().includes('unraid'), 'Default tagline should not reference Unraid');
+
+    // Admin customizes the tagline and disables registration
     res = await fetch(`${baseUrl}/api/admin/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
-      body: JSON.stringify({ allowRegistration: false })
+      body: JSON.stringify({ allowRegistration: false, appTagline: 'Custom Gundam Hangar' })
     });
     assert.strictEqual(res.status, 200);
+    const settingsData = await res.json();
+    assert.strictEqual(settingsData.settings.appTagline, 'Custom Gundam Hangar');
+
+    res = await fetch(`${baseUrl}/api/auth/status`);
+    const updatedStatus = await res.json();
+    assert.strictEqual(updatedStatus.tagline, 'Custom Gundam Hangar');
 
     res = await fetch(`${baseUrl}/api/auth/register`, {
       method: 'POST',
@@ -218,7 +231,7 @@ async function runTests() {
       body: JSON.stringify({ username: 'kamille', password: 'zeta1234' })
     });
     assert.strictEqual(res.status, 403, 'Registration should be blocked when disabled by admin');
-    console.log('✓ Verified Admin user management & registration lock');
+    console.log('✓ Verified Admin user management, customizable branding tagline & registration lock');
 
     console.log('\nALL SMOKE TESTS PASSED!');
   } finally {

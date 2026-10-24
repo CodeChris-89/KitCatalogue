@@ -36,6 +36,7 @@ function getDb() {
     );
 
     INSERT OR IGNORE INTO settings (key, value) VALUES ('allow_registration', 'true');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('app_tagline', 'Model Hangar');
 
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

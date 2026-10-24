@@ -76,7 +76,7 @@
         </div>
         <div>
           <span class="brand-title">KitCatalogue</span>
-          <span class="brand-tag">Unraid Hangar</span>
+          <span id="brand-tag" class="brand-tag">Model Hangar</span>
         </div>
       </div>
 
@@ -341,7 +341,7 @@
             <div class="admin-card-header">
               <div>
                 <h3>📦 One-Click Full Backup &amp; Restore</h3>
-                <p>Export your entire catalogue—including embedded stance photos and uploaded PDF manuals—into a single portable backup file, or restore onto any Unraid server.</p>
+                <p>Export your entire catalogue—including embedded stance photos and uploaded PDF manuals—into a single portable backup file, or restore onto any server or local instance.</p>
               </div>
             </div>
             <div class="portability-actions-row">
@@ -376,8 +376,24 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
+                <h3>Catalogue Branding</h3>
+                <p>Customize the brand tagline displayed under KitCatalogue in the sidebar.</p>
+              </div>
+            </div>
+            <form id="admin-tagline-form" class="upload-bar-inputs" style="margin-top: 8px;">
+              <div class="form-group" style="flex: 1;">
+                <label for="admin-tagline-input">Brand Subtitle / Tagline</label>
+                <input type="text" id="admin-tagline-input" maxlength="50" placeholder="Model Hangar" required />
+              </div>
+              <button type="submit" id="admin-tagline-save-btn" class="btn btn-primary">Save Tagline</button>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
                 <h3>Server Registration Policy</h3>
-                <p>Control whether new users on your Unraid network can self-register accounts.</p>
+                <p>Control whether new users on your network can self-register accounts.</p>
               </div>
               <label class="switch-label">
                 <input type="checkbox" id="admin-allow-reg-toggle" switch />

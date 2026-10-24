@@ -96,6 +96,9 @@
       const showcaseParam = params.get('showcase');
       if (showcaseParam) {
         const scData = await api(`/api/showcase/${encodeURIComponent(showcaseParam)}`);
+        if (scData.tagline && $('brand-tag')) {
+          $('brand-tag').textContent = scData.tagline;
+        }
         state.showcaseMode = true;
         state.showcaseToken = showcaseParam;
         state.showcaseOwner = scData.owner;
@@ -119,6 +122,9 @@
       }
 
       const status = await api('/api/auth/status');
+      if (status.tagline && $('brand-tag')) {
+        $('brand-tag').textContent = status.tagline;
+      }
       state.needsSetup = status.needsSetup;
       state.allowRegistration = status.allowRegistration;
       state.user = status.user;
@@ -1197,6 +1203,9 @@
     try {
       const data = await api('/api/admin/users');
       $('admin-allow-reg-toggle').checked = Boolean(data.settings.allowRegistration);
+      if ($('admin-tagline-input') && data.settings && data.settings.appTagline) {
+        $('admin-tagline-input').value = data.settings.appTagline;
+      }
 
       const tbody = $('admin-users-tbody');
       tbody.innerHTML = data.users
@@ -1755,6 +1764,24 @@
     });
 
     // Admin controls
+    $('admin-tagline-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = $('admin-tagline-input');
+      const val = input.value.trim() || 'Model Hangar';
+      try {
+        const res = await api('/api/admin/settings', {
+          method: 'PUT',
+          body: { appTagline: val }
+        });
+        const updated = res.settings?.appTagline || val;
+        input.value = updated;
+        if ($('brand-tag')) $('brand-tag').textContent = updated;
+        showToast('Tagline updated', 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
     $('admin-allow-reg-toggle').addEventListener('change', async (e) => {
       try {
         await api('/api/admin/settings', {

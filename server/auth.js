@@ -107,6 +107,19 @@ function setRegistrationAllowed(allowed) {
   );
 }
 
+function getAppTagline() {
+  const db = getDb();
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'app_tagline'").get();
+  return row && row.value ? row.value : 'Model Hangar';
+}
+
+function setAppTagline(tagline) {
+  const db = getDb();
+  const clean = String(tagline || '').trim() || 'Model Hangar';
+  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('app_tagline', ?)").run(clean);
+  return clean;
+}
+
 module.exports = {
   hashPassword,
   verifyPassword,
@@ -115,5 +128,7 @@ module.exports = {
   getAuthenticatedUser,
   getUserCount,
   isRegistrationAllowed,
-  setRegistrationAllowed
+  setRegistrationAllowed,
+  getAppTagline,
+  setAppTagline
 };

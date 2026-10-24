@@ -11,7 +11,9 @@ const {
   getAuthenticatedUser,
   getUserCount,
   isRegistrationAllowed,
-  setRegistrationAllowed
+  setRegistrationAllowed,
+  getAppTagline,
+  setAppTagline
 } = require('./auth');
 const { parseMultipart } = require('./multipart');
 const { searchWebImages, attachImageFromUrl, autoCrawlCoverImage } = require('./websearch');
@@ -175,6 +177,7 @@ async function handleApi(req, res, urlObj) {
         username: owner.username,
         displayName: owner.display_name
       },
+      tagline: getAppTagline(),
       kits
     });
   }
@@ -275,6 +278,7 @@ async function handleApi(req, res, urlObj) {
     return sendJson(res, 200, {
       needsSetup: userCount === 0,
       allowRegistration: isRegistrationAllowed(),
+      tagline: getAppTagline(),
       user: user
         ? {
             id: user.id,
@@ -1154,20 +1158,25 @@ async function handleApi(req, res, urlObj) {
       return sendJson(res, 200, {
         users,
         settings: {
-          allowRegistration: isRegistrationAllowed()
+          allowRegistration: isRegistrationAllowed(),
+          appTagline: getAppTagline()
         }
       });
     }
 
-    // PUT /api/admin/settings - Toggle open registration
+    // PUT /api/admin/settings - Update server settings (tagline, registration)
     if (pathname === '/api/admin/settings' && method === 'PUT') {
       const body = await readJsonBody(req);
       if (body.allowRegistration !== undefined) {
         setRegistrationAllowed(Boolean(body.allowRegistration));
       }
+      if (body.appTagline !== undefined) {
+        setAppTagline(body.appTagline);
+      }
       return sendJson(res, 200, {
         settings: {
-          allowRegistration: isRegistrationAllowed()
+          allowRegistration: isRegistrationAllowed(),
+          appTagline: getAppTagline()
         }
       });
     }

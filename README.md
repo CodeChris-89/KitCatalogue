@@ -3,7 +3,7 @@
 > [!NOTE]
 > **AI Disclosure:** This application was extensively built and architected using Generative AI (Antigravity with Google Gemini & Claude models) in collaboration with the repository owner.
 
-A self-hosted web application for cataloguing **Building Kits** (Gundam / Gunpla, Moshow Toys, Book Nooks, 30 Minutes Missions, Zoids, Kotobukiya, and scale models). Designed to run anywhere as a single, zero-external-dependency container with **Docker Compose**.
+A self-hosted web application for cataloguing **Building Kits** (Gundam / Gunpla, Moshow Toys, Book Nooks, 30 Minutes Missions, Zoids, Kotobukiya, and scale models). Built with native Node.js and designed to run anywhere as a single, zero-external-dependency container with **Docker Compose**.
 
 ## Key Features
 

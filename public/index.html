@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KitCatalogue — Building Kits &amp; Mecha Hangar</title>
-  <link rel="stylesheet" href="/styles.css?v=3" />
+  <link rel="stylesheet" href="/styles.css?v=4" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M50 14 L82 32 L82 68 L50 86 L18 68 L18 32 Z%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2212%22 fill=%22%23f59e0b%22/></svg>" />
 </head>
 <body>
@@ -619,6 +619,13 @@
           <textarea id="kit-notes" rows="3" placeholder="Notes on water slides, custom paint mixes, LED wiring, articulation, or spare accessories..."></textarea>
         </div>
 
+        <div id="kit-auto-crawl-group" class="form-group">
+          <label class="checkbox-inline" style="padding-bottom: 0;">
+            <input type="checkbox" id="kit-auto-crawl" checked />
+            <span>🌐 Auto-crawl title/box art image from the web on creation</span>
+          </label>
+        </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-ghost" data-close-modal="kit-form-modal">Cancel</button>
           <button type="submit" id="kit-save-btn" class="btn btn-primary">Save Kit</button>
@@ -689,6 +696,12 @@
 
         <!-- TAB 1: STANCE PHOTOS -->
         <div id="detail-tab-stances" class="detail-tab-pane">
+          <div class="stances-actions-toolbar">
+            <button type="button" id="open-web-search-modal-btn" class="btn btn-secondary btn-sm">
+              🌐 Search Web for Box Art / Stance Images
+            </button>
+          </div>
+
           <form id="upload-photo-form" class="upload-bar">
             <div class="upload-bar-inputs">
               <div class="form-group">
@@ -786,6 +799,39 @@
     </div>
   </div>
 
-  <script src="/app.js?v=3"></script>
+  <!-- IN-APP WEB IMAGE SEARCH MODAL -->
+  <div id="image-search-modal" class="modal-backdrop hidden">
+    <div class="modal-panel modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3>In-App Web Image Search</h3>
+          <p class="subtitle" style="margin-top:2px;">Find and attach box art or kit action poses directly from the web</p>
+        </div>
+        <button type="button" class="modal-close" data-close-modal="image-search-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="image-search-form" class="upload-bar-inputs" style="margin-bottom: 14px;">
+          <div class="form-group" style="flex: 2;">
+            <label for="image-search-input">Search Query (e.g. Gundam model, Box Art)</label>
+            <input type="text" id="image-search-input" placeholder="e.g. MGEX Strike Freedom box art" required />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label for="image-search-stance">Attach as Stance</label>
+            <input type="text" id="image-search-stance" value="Box Art / Web Cover" />
+          </div>
+          <label class="checkbox-inline" style="padding-bottom: 9px;">
+            <input type="checkbox" id="image-search-cover" checked />
+            <span>Set as Cover</span>
+          </label>
+          <button type="submit" id="image-search-submit-btn" class="btn btn-primary">🔍 Search</button>
+        </form>
+
+        <div id="image-search-status" class="view-subtitle" style="margin-bottom: 10px;"></div>
+        <div id="image-search-results" class="web-image-results-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=4"></script>
 </body>
 </html>

@@ -14,6 +14,7 @@ const {
   setRegistrationAllowed
 } = require('./auth');
 const { parseMultipart } = require('./multipart');
+const { searchWebImages, attachImageFromUrl, autoCrawlCoverImage } = require('./websearch');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -719,6 +720,18 @@ async function handleApi(req, res, urlObj) {
       );
 
     const newId = Number(result.lastInsertRowid);
+
+    // Auto-crawl title / box art image from the web if enabled (default: true) and no cover was uploaded yet
+    const autoCrawl = body.auto_crawl_image !== false && body.auto_crawl_image !== 'false';
+    if (autoCrawl) {
+      const searchTerms = [body.brand, body.grade_scale, name, body.model_number]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      // Run crawl and attach as cover
+      await autoCrawlCoverImage(newId, currentUser.id, searchTerms || name);
+    }
+
     const kitRow = db.prepare('SELECT * FROM kits WHERE id = ?').get(newId);
     return sendJson(res, 201, { kit: hydrateKit(kitRow, db) });
   }
@@ -920,6 +933,38 @@ async function handleApi(req, res, urlObj) {
     db.prepare("UPDATE kits SET updated_at = datetime('now') WHERE id = ?").run(kitId);
     const updatedKit = db.prepare('SELECT * FROM kits WHERE id = ?').get(kitId);
     return sendJson(res, 201, { kit: hydrateKit(updatedKit, db), inserted });
+  }
+
+  // GET /api/images/search?q=... - In-app web image search
+  if (pathname === '/api/images/search' && method === 'GET') {
+    const q = urlObj.searchParams.get('q') || '';
+    if (!q.trim()) {
+      return sendJson(res, 200, { results: [] });
+    }
+    const results = await searchWebImages(q.trim(), 20);
+    return sendJson(res, 200, { results });
+  }
+
+  // POST /api/kits/:id/photos/from-url - Attach web image to kit
+  const photoUrlMatch = pathname.match(/^\/api\/kits\/(\d+)\/photos\/from-url$/);
+  if (photoUrlMatch && method === 'POST') {
+    const kitId = Number(photoUrlMatch[1]);
+    const body = await readJsonBody(req);
+    const imageUrl = String(body.image_url || '').trim();
+    if (!imageUrl) {
+      return sendJson(res, 400, { error: 'Image URL is required' });
+    }
+    try {
+      const attached = await attachImageFromUrl(kitId, currentUser.id, imageUrl, {
+        stanceName: String(body.stance_name || 'Cover / Box Art').trim(),
+        caption: String(body.caption || 'Web search import').trim(),
+        isCover: body.is_cover !== false
+      });
+      const updatedKit = db.prepare('SELECT * FROM kits WHERE id = ?').get(kitId);
+      return sendJson(res, 201, { kit: hydrateKit(updatedKit, db), attached });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message || 'Failed to attach image from URL' });
+    }
   }
 
   // PUT or DELETE /api/photos/:photoId - Update stance/caption/cover or delete photo

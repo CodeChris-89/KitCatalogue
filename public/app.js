@@ -690,6 +690,11 @@
       $('kit-category').value = 'Gundam / Gunpla';
       $('kit-currency').value = 'USD';
       $('kit-priority').value = 'medium';
+      $('kit-auto-crawl').checked = true;
+      $('kit-auto-crawl-group').classList.remove('hidden');
+    }
+    if (kit) {
+      $('kit-auto-crawl-group').classList.add('hidden');
     }
     showModal('kit-form-modal');
     $('kit-name').focus();
@@ -723,6 +728,79 @@
         url: `https://www.google.com/search?q=${encodeURIComponent(`site:mech9.com ${shortQuery}`)}`
       }
     ];
+  }
+
+  // IN-APP WEB IMAGE SEARCH LOGIC
+  async function performWebImageSearch(query) {
+    const statusEl = $('image-search-status');
+    const resultsGrid = $('image-search-results');
+    const submitBtn = $('image-search-submit-btn');
+
+    statusEl.textContent = `Searching web for "${query}"...`;
+    resultsGrid.innerHTML = '';
+    submitBtn.disabled = true;
+
+    try {
+      const data = await api(`/api/images/search?q=${encodeURIComponent(query)}`);
+      const items = data.results || [];
+      if (!items.length) {
+        statusEl.textContent = `No images found for "${query}". Try adjusting your keywords.`;
+        return;
+      }
+
+      statusEl.textContent = `Found ${items.length} images. Click "Select Image" to attach to your kit:`;
+      resultsGrid.innerHTML = items
+        .map(
+          (item, idx) => `
+        <div class="web-image-card">
+          <div class="web-image-thumb">
+            <img src="${escapeHtml(item.thumbnail || item.image)}" alt="${escapeHtml(item.title)}" loading="lazy" />
+          </div>
+          <div class="web-image-info">
+            <span class="web-image-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
+            <button type="button" class="btn btn-primary btn-sm web-image-select-btn" data-web-img-idx="${idx}">
+              ✓ Select Image
+            </button>
+          </div>
+        </div>
+      `
+        )
+        .join('');
+
+      resultsGrid.querySelectorAll('[data-web-img-idx]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const idx = Number(btn.dataset.webImgIdx);
+          const chosen = items[idx];
+          if (!chosen || !state.activeKitId) return;
+
+          btn.disabled = true;
+          btn.textContent = 'Importing...';
+          try {
+            const res = await api(`/api/kits/${state.activeKitId}/photos/from-url`, {
+              method: 'POST',
+              body: {
+                image_url: chosen.image || chosen.thumbnail,
+                stance_name: $('image-search-stance').value.trim() || 'Cover / Box Art',
+                caption: chosen.title || 'Web search import',
+                is_cover: $('image-search-cover').checked
+              }
+            });
+            replaceKitInState(res.kit);
+            renderKitDetailModal(res.kit);
+            $('image-search-modal').classList.add('hidden');
+            showToast('Web image attached as kit cover/stance!', 'success');
+          } catch (err) {
+            showToast(err.message, 'error');
+            btn.disabled = false;
+            btn.textContent = '✓ Select Image';
+          }
+        });
+      });
+    } catch (err) {
+      statusEl.textContent = `Search error: ${err.message}`;
+    } finally {
+      submitBtn.disabled = false;
+    }
   }
 
   // KIT DETAIL MODAL (STANCES, MANUALS, QUICK LOOKUPS, STORAGE)
@@ -1289,7 +1367,8 @@
         purchase_date: $('kit-purchase-date').value,
         started_date: $('kit-started-date').value,
         completed_date: $('kit-completed-date').value,
-        notes: $('kit-notes').value.trim()
+        notes: $('kit-notes').value.trim(),
+        auto_crawl_image: $('kit-auto-crawl') ? $('kit-auto-crawl').checked : false
       };
 
       try {
@@ -1493,6 +1572,28 @@
     $('manual-viewer-close').addEventListener('click', () => {
       $('manual-viewer-iframe').src = 'about:blank';
       $('manual-viewer-container').classList.add('hidden');
+    });
+
+    // IN-APP WEB IMAGE SEARCH EVENTS
+    $('open-web-search-modal-btn').addEventListener('click', () => {
+      const kit = state.kits.find((k) => k.id === state.activeKitId);
+      if (!kit) return;
+      const defaultQuery = [kit.brand, kit.grade_scale, kit.name, 'box art']
+        .filter(Boolean)
+        .join(' ');
+      $('image-search-input').value = defaultQuery;
+      $('image-search-stance').value = 'Box Art / Web Cover';
+      $('image-search-cover').checked = true;
+      $('image-search-status').textContent = 'Press Search to find images online.';
+      $('image-search-results').innerHTML = '';
+      showModal('image-search-modal');
+      performWebImageSearch(defaultQuery);
+    });
+
+    $('image-search-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = $('image-search-input').value.trim();
+      if (q) performWebImageSearch(q);
     });
 
     // IDEA 6: PORTABILITY, BACKUP & PUBLIC SHOWCASE EVENTS

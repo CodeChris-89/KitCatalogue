@@ -1343,6 +1343,74 @@ textarea:focus {
   margin-right: 8px;
 }
 
+.stances-actions-toolbar {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+/* WEB IMAGE SEARCH RESULTS */
+.web-image-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.web-image-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.web-image-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-sky);
+}
+
+.web-image-thumb {
+  height: 140px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.web-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.web-image-info {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.web-image-title {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  max-height: 2.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.web-image-select-btn {
+  margin-top: auto;
+  width: 100%;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;

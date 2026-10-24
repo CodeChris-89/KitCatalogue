@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>KitCatalogue</Name>
+  <Repository>kit-catalogue:latest</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Overview>Self-hosted Building Kits Catalogue for Gundam/Gunpla, Moshow, Book Nooks, and scale models. Features Owned vs. Wishlist tracking, build statuses, stance photo galleries, PDF manual viewer, and multi-user management where the first user becomes Admin.</Overview>
+  <Category>Tools: MediaApp:Other</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="AppData Storage (/data)" Target="/data" Default="/mnt/user/appdata/kit-catalogue" Mode="rw" Description="Persistent storage for SQLite database, stance photos, and PDF manuals" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/kit-catalogue</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="Unraid User ID (default 99 = nobody)" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Unraid Group ID (default 100 = users)" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+</Container>

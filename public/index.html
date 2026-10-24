@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KitCatalogue — Building Kits &amp; Mecha Hangar</title>
+  <link rel="stylesheet" href="/styles.css?v=3" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M50 14 L82 32 L82 68 L50 86 L18 68 L18 32 Z%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2212%22 fill=%22%23f59e0b%22/></svg>" />
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- PUBLIC SHOWCASE READ-ONLY BANNER -->
+  <div id="showcase-top-banner" class="showcase-top-banner hidden">
+    <div>
+      <strong>🌐 Public Hangar Showcase:</strong> Viewing <span id="showcase-owner-name"></span>'s Building Kit Collection (Read-Only)
+    </div>
+    <a href="/" class="btn btn-secondary btn-sm">Sign In to Your Hangar</a>
+  </div>
+
+  <!-- AUTHENTICATION / FIRST-ADMIN SETUP SCREEN -->
+  <div id="auth-screen" class="auth-screen hidden">
+    <div class="auth-card">
+      <div class="brand-header">
+        <div class="brand-logo">
+          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="18,2 33,10.5 33,25.5 18,34 3,25.5 3,10.5" stroke="#38bdf8" />
+            <polygon points="18,9 26,13.5 26,22.5 18,27 10,22.5 10,13.5" fill="rgba(56,189,248,0.18)" stroke="#f59e0b" />
+          </svg>
+        </div>
+        <div>
+          <h1>KitCatalogue</h1>
+          <p class="subtitle">Gundam, Moshow, Book Nooks &amp; Scale Model Hangar</p>
+        </div>
+      </div>
+
+      <div id="first-admin-banner" class="alert-banner admin-setup-banner hidden">
+        <strong>Initial Server Setup:</strong> No users exist yet. Create your account below — <strong>the first registered user automatically becomes the Server Administrator</strong>.
+      </div>
+
+      <div id="auth-tabs" class="auth-tabs">
+        <button type="button" id="tab-login" class="auth-tab active">Sign In</button>
+        <button type="button" id="tab-register" class="auth-tab">Create Account</button>
+      </div>
+
+      <form id="auth-form" class="auth-form">
+        <div class="form-group">
+          <label for="auth-username">Username</label>
+          <input type="text" id="auth-username" required autocomplete="username" placeholder="e.g. amuro_ray" />
+        </div>
+        <div id="auth-displayname-group" class="form-group hidden">
+          <label for="auth-displayname">Display Name</label>
+          <input type="text" id="auth-displayname" autocomplete="name" placeholder="e.g. Amuro Ray" />
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" required autocomplete="current-password" placeholder="At least 6 characters" />
+        </div>
+        <div id="auth-error" class="form-error hidden"></div>
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION SHELL -->
+  <div id="app-shell" class="app-shell hidden">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo-sm">
+          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4">
+            <polygon points="18,2 33,10.5 33,25.5 18,34 3,25.5 3,10.5" stroke="#38bdf8" />
+            <circle cx="18" cy="18" r="6" fill="#f59e0b" stroke="none" />
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">KitCatalogue</span>
+          <span class="brand-tag">Unraid Hangar</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">CATALOGUE</div>
+        <button type="button" class="nav-item active" data-nav="all">
+          <span class="nav-icon">❖</span>
+          <span>All Kits</span>
+          <span id="nav-count-all" class="nav-badge">0</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="owned">
+          <span class="nav-icon">📦</span>
+          <span>Owned Collection</span>
+          <span id="nav-count-owned" class="nav-badge">0</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="wishlist">
+          <span class="nav-icon">★</span>
+          <span>Wishlist</span>
+          <span id="nav-count-wishlist" class="nav-badge badge-amber">0</span>
+        </button>
+
+        <div class="nav-section-label">BUILD PIPELINE</div>
+        <button type="button" class="nav-item" data-nav="status:backlog">
+          <span class="status-dot dot-backlog"></span>
+          <span>Backlog</span>
+          <span id="nav-count-backlog" class="nav-badge">0</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="status:building">
+          <span class="status-dot dot-building"></span>
+          <span>In Progress / Building</span>
+          <span id="nav-count-building" class="nav-badge">0</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="status:finished">
+          <span class="status-dot dot-finished"></span>
+          <span>Finished Builds</span>
+          <span id="nav-count-finished" class="nav-badge">0</span>
+        </button>
+
+        <div class="nav-section-label">INSIGHTS &amp; DATA</div>
+        <button type="button" class="nav-item" data-nav="analytics">
+          <span class="nav-icon">📊</span>
+          <span>Analytics &amp; Costs</span>
+        </button>
+        <button type="button" id="nav-data-portability" class="nav-item" data-nav="portability">
+          <span class="nav-icon">💾</span>
+          <span>Backup, Import &amp; Share</span>
+        </button>
+
+        <div class="nav-section-label">CATEGORIES</div>
+        <div id="sidebar-categories" class="sidebar-categories"></div>
+
+        <div id="admin-nav-section" class="hidden">
+          <div class="nav-section-label">SYSTEM</div>
+          <button type="button" class="nav-item" data-nav="admin">
+            <span class="nav-icon">🛡️</span>
+            <span>User Management</span>
+            <span class="nav-badge badge-cyan">Admin</span>
+          </button>
+        </div>
+      </nav>
+
+      <div id="sidebar-user-footer" class="sidebar-footer">
+        <div class="user-chip">
+          <div id="user-avatar" class="user-avatar">U</div>
+          <div class="user-meta">
+            <div class="user-name-row">
+              <span id="current-user-name">Builder</span>
+              <span id="current-user-role" class="role-pill">admin</span>
+            </div>
+            <span id="current-user-handle" class="user-handle">@builder</span>
+          </div>
+        </div>
+        <button type="button" id="logout-btn" class="btn btn-ghost btn-sm" title="Sign Out">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-title-group">
+          <h2 id="view-title">All Building Kits</h2>
+          <span id="view-subtitle" class="view-subtitle">Track owned kits, build statuses, stances &amp; manuals</span>
+        </div>
+
+        <div id="topbar-owner-actions" class="topbar-actions">
+          <button type="button" id="add-wishlist-btn" class="btn btn-secondary">
+            <span>★ + Wishlist Kit</span>
+          </button>
+          <button type="button" id="add-kit-btn" class="btn btn-primary">
+            <span>+ Add Owned Kit</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- CATALOGUE VIEW -->
+      <section id="catalogue-view" class="content-section">
+        <!-- Stats Bar -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Owned Kits</span>
+            <strong id="stat-owned" class="stat-value">0</strong>
+            <span id="stat-owned-val" class="stat-sub">$0.00 total value</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Backlog Queue</span>
+            <strong id="stat-backlog" class="stat-value text-slate">0</strong>
+            <span class="stat-sub">Unbuilt boxes</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Active Workbench</span>
+            <strong id="stat-building" class="stat-value text-sky">0</strong>
+            <span class="stat-sub">Building / Painting</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Completed Builds</span>
+            <strong id="stat-finished" class="stat-value text-emerald">0</strong>
+            <span id="stat-completion-rate" class="stat-sub">0% completion rate</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Wishlist</span>
+            <strong id="stat-wishlist" class="stat-value text-amber">0</strong>
+            <span id="stat-media-count" class="stat-sub">0 stances · 0 manuals</span>
+          </div>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="filter-bar">
+          <div class="search-box">
+            <input type="search" id="search-input" placeholder="Search kits by name, series, brand, grade/scale, display shelf, spare box #..." />
+          </div>
+          <div class="filter-controls">
+            <select id="filter-category">
+              <option value="">All Categories</option>
+              <option value="Gundam / Gunpla">Gundam / Gunpla</option>
+              <option value="Moshow Toys / Mecha">Moshow Toys / Mecha</option>
+              <option value="Book Nook / Diorama">Book Nook / Diorama</option>
+              <option value="30 Minutes Missions / Sisters">30 Minutes Missions / Sisters</option>
+              <option value="Zoids / Kotobukiya">Zoids / Kotobukiya</option>
+              <option value="Evangelion / Moderoid">Evangelion / Moderoid</option>
+              <option value="Military / Scale Vehicle">Military / Scale Vehicle</option>
+              <option value="Wood / Metal Puzzle">Wood / Metal Puzzle</option>
+              <option value="Other Kit">Other Kit</option>
+            </select>
+
+            <select id="filter-status">
+              <option value="">All Statuses</option>
+              <option value="backlog">Backlog</option>
+              <option value="building">Building</option>
+              <option value="panel_lining">Panel Lining / Decals</option>
+              <option value="painting">Painting / Topcoat</option>
+              <option value="finished">Finished</option>
+              <option value="on_hold">On Hold</option>
+              <option value="wishlist">Wishlist</option>
+            </select>
+
+            <select id="filter-location">
+              <option value="">All Display Locations</option>
+            </select>
+
+            <select id="sort-select">
+              <option value="updated_desc">Recently Updated</option>
+              <option value="name_asc">Name (A → Z)</option>
+              <option value="status">Build Status</option>
+              <option value="price_desc">Price (High → Low)</option>
+              <option value="rating_desc">Rating (High → Low)</option>
+              <option value="release_asc">Release Date</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Kits Grid -->
+        <div id="kits-grid" class="kits-grid"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-icon">🤖</div>
+          <h3>Your Hangar is Empty</h3>
+          <p>Start cataloguing your Gundam, Moshow, Book Nooks, and other building kits, or add upcoming releases to your wishlist.</p>
+          <div id="empty-owner-actions" class="empty-actions">
+            <button type="button" id="empty-add-owned" class="btn btn-primary">+ Add Owned Kit</button>
+            <button type="button" id="empty-add-wishlist" class="btn btn-secondary">★ Add to Wishlist</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- IDEA 4: BACKLOG ANALYTICS & COST TRACKING VIEW -->
+      <section id="analytics-view" class="content-section hidden">
+        <div class="stats-grid" id="analytics-summary-cards"></div>
+        <div class="analytics-grid">
+          <div class="admin-card">
+            <h3>Build Pipeline &amp; Backlog Breakdown</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Distribution of owned kits across build stages</p>
+            <div id="chart-pipeline" class="bar-chart"></div>
+          </div>
+
+          <div class="admin-card">
+            <h3>Spend &amp; Count by Brand / Manufacturer</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Where your hangar budget goes</p>
+            <div id="chart-brands" class="bar-chart"></div>
+          </div>
+
+          <div class="admin-card">
+            <h3>Grade &amp; Scale Breakdown</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">HG, RG, MG, PG, 1/72 &amp; Dioramas</p>
+            <div id="chart-grades" class="bar-chart"></div>
+          </div>
+
+          <div class="admin-card">
+            <h3>Display Locations &amp; Spare Box Index</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Where your kits and runner boxes live</p>
+            <div id="chart-locations" class="bar-chart"></div>
+          </div>
+
+          <div class="admin-card" style="grid-column: 1 / -1;">
+            <h3>Wishlist Price Tracker (Target Price vs. MSRP / Retail)</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Track pre-order release dates and compare street prices against MSRP</p>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Wishlist Kit</th>
+                    <th>Brand / Grade</th>
+                    <th>Priority</th>
+                    <th>Release / Restock Date</th>
+                    <th>Current / Street Price</th>
+                    <th>Retail / MSRP</th>
+                    <th>Deal / Markup</th>
+                  </tr>
+                </thead>
+                <tbody id="analytics-wishlist-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- IDEA 6: DATA PORTABILITY, BACKUP & PUBLIC SHOWCASE VIEW -->
+      <section id="portability-view" class="content-section hidden">
+        <div class="admin-grid">
+          <!-- Public Showcase Mode -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>🌐 Public "Hangar Showcase" Link (Read-Only)</h3>
+                <p>Share a read-only gallery of your collection, stances, and build statuses with friends without requiring them to log in.</p>
+              </div>
+              <label class="switch-label">
+                <input type="checkbox" id="showcase-enable-toggle" />
+                <span>Enable Public Showcase</span>
+              </label>
+            </div>
+            <div id="showcase-link-box" class="showcase-link-box hidden">
+              <input type="text" id="showcase-url-input" readonly />
+              <button type="button" id="copy-showcase-btn" class="btn btn-primary btn-sm">Copy Link</button>
+              <button type="button" id="regen-showcase-btn" class="btn btn-secondary btn-sm">Regenerate Link</button>
+            </div>
+          </div>
+
+          <!-- Full Backup & Restore -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>📦 One-Click Full Backup &amp; Restore</h3>
+                <p>Export your entire catalogue—including embedded stance photos and uploaded PDF manuals—into a single portable backup file, or restore onto any Unraid server.</p>
+              </div>
+            </div>
+            <div class="portability-actions-row">
+              <button type="button" id="export-full-backup-btn" class="btn btn-primary">⬇ Download Full Backup (.json with Photos &amp; Manuals)</button>
+              <button type="button" id="export-metadata-json-btn" class="btn btn-secondary">⬇ Export Metadata Only (.json)</button>
+              <button type="button" id="export-csv-btn" class="btn btn-secondary">📊 Export Spreadsheet (.csv)</button>
+            </div>
+          </div>
+
+          <!-- Import from Backup JSON or CSV -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>📥 Restore Backup or Bulk Import (JSON / CSV)</h3>
+                <p>Import a KitCatalogue `.json` backup archive or bulk-import kits from a `.csv` spreadsheet (`name,category,brand,grade_scale,series,model_number,collection_type,status,price,retail_price,currency,display_location,storage_box,notes`).</p>
+              </div>
+            </div>
+            <form id="import-data-form" class="upload-bar-inputs">
+              <div class="form-group">
+                <label for="import-file-input">Select `.json` Backup or `.csv` Spreadsheet</label>
+                <input type="file" id="import-file-input" accept=".json,.csv" required />
+              </div>
+              <button type="submit" id="import-submit-btn" class="btn btn-primary">⬆ Import Into Catalogue</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN USER MANAGEMENT VIEW -->
+      <section id="admin-view" class="content-section hidden">
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>Server Registration Policy</h3>
+                <p>Control whether new users on your Unraid network can self-register accounts.</p>
+              </div>
+              <label class="switch-label">
+                <input type="checkbox" id="admin-allow-reg-toggle" />
+                <span>Allow Public Registration</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>Create User Account</h3>
+                <p>Directly provision a user or co-administrator account.</p>
+              </div>
+            </div>
+            <form id="admin-create-user-form" class="admin-inline-form">
+              <input type="text" id="new-user-username" required placeholder="Username" />
+              <input type="text" id="new-user-displayname" placeholder="Display Name" />
+              <input type="password" id="new-user-password" required placeholder="Password (min 6 chars)" />
+              <select id="new-user-role">
+                <option value="user">Standard User</option>
+                <option value="admin">Administrator</option>
+              </select>
+              <button type="submit" class="btn btn-primary">+ Create User</button>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>Registered Users</h3>
+                <p>First user is Admin by default. Manage roles, reset passwords, or disable accounts.</p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Owned Kits</th>
+                    <th>Wishlist</th>
+                    <th>Stances &amp; Manuals</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: CREATE / EDIT KIT -->
+  <div id="kit-form-modal" class="modal-backdrop hidden">
+    <div class="modal-panel modal-lg">
+      <div class="modal-header">
+        <h3 id="kit-form-title">Add Building Kit</h3>
+        <button type="button" class="modal-close" data-close-modal="kit-form-modal">&times;</button>
+      </div>
+      <form id="kit-form" class="modal-body">
+        <input type="hidden" id="kit-id" />
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="kit-collection-type">Catalogue Section *</label>
+            <select id="kit-collection-type" required>
+              <option value="owned">📦 Owned Collection</option>
+              <option value="wishlist">★ Wishlist</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="kit-status">Build Status *</label>
+            <select id="kit-status" required>
+              <option value="backlog">Backlog (Unbuilt)</option>
+              <option value="building">Building (In Progress)</option>
+              <option value="panel_lining">Panel Lining &amp; Decals</option>
+              <option value="painting">Painting &amp; Topcoat</option>
+              <option value="finished">Finished / Displayed</option>
+              <option value="on_hold">On Hold</option>
+              <option value="wishlist">Wishlist</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="kit-name">Kit Name *</label>
+          <input type="text" id="kit-name" required placeholder="e.g. MGEX 1/100 Strike Freedom Gundam, Moshow Takeda Shingen, Sakura Densya Book Nook" />
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="kit-category">Category</label>
+            <input type="text" id="kit-category" list="category-suggestions" placeholder="e.g. Gundam / Gunpla" />
+            <datalist id="category-suggestions">
+              <option value="Gundam / Gunpla"></option>
+              <option value="Moshow Toys / Mecha"></option>
+              <option value="Book Nook / Diorama"></option>
+              <option value="30 Minutes Missions / Sisters"></option>
+              <option value="Zoids / Kotobukiya"></option>
+              <option value="Evangelion / Moderoid"></option>
+              <option value="Military / Scale Vehicle"></option>
+              <option value="Wood / Metal Puzzle"></option>
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label for="kit-brand">Brand / Manufacturer</label>
+            <input type="text" id="kit-brand" list="brand-suggestions" placeholder="e.g. Bandai, Moshow, Rolife, Kotobukiya" />
+            <datalist id="brand-suggestions">
+              <option value="Bandai Spirits"></option>
+              <option value="Moshow Toys"></option>
+              <option value="Rolife / Robotime"></option>
+              <option value="Kotobukiya"></option>
+              <option value="Good Smile / Moderoid"></option>
+              <option value="In Era+ / Infinite Dimension"></option>
+              <option value="Motor Nuclear"></option>
+              <option value="Cutebee"></option>
+              <option value="Tamiya"></option>
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label for="kit-grade-scale">Grade / Scale</label>
+            <input type="text" id="kit-grade-scale" list="grade-suggestions" placeholder="e.g. MG 1/100, RG 1/144, PG, Noble Class" />
+            <datalist id="grade-suggestions">
+              <option value="HG 1/144"></option>
+              <option value="RG 1/144"></option>
+              <option value="MG 1/100"></option>
+              <option value="MGEX 1/100"></option>
+              <option value="PG 1/60"></option>
+              <option value="SD / MGSD"></option>
+              <option value="1/72 Progenitor Effect"></option>
+              <option value="Book Nook Standard"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="kit-series">Series / Line</label>
+            <input type="text" id="kit-series" placeholder="e.g. Universal Century, Progenitor Effect, Cyber City" />
+          </div>
+          <div class="form-group">
+            <label for="kit-model-number">Model / Box Code</label>
+            <input type="text" id="kit-model-number" placeholder="e.g. RX-93-v2, MCT-J02, TGB01" />
+          </div>
+          <div class="form-group">
+            <label for="kit-priority">Wishlist / Build Priority</label>
+            <select id="kit-priority">
+              <option value="medium">Medium Priority</option>
+              <option value="high">High / Grail Kit</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- IDEA 3: DISPLAY LOCATION & SPARE PARTS BOX INDEX -->
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="kit-display-location">📍 Display Location (Where is it displayed?)</label>
+            <input type="text" id="kit-display-location" list="location-suggestions" placeholder="e.g. Detolf Cabinet - Shelf 2, Office Desk, Unbuilt Closet" />
+            <datalist id="location-suggestions">
+              <option value="Detolf Cabinet - Shelf 1"></option>
+              <option value="Detolf Cabinet - Shelf 2"></option>
+              <option value="Office Desk"></option>
+              <option value="Living Room Bookshelf"></option>
+              <option value="Workbench"></option>
+              <option value="Backlog Closet"></option>
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label for="kit-storage-box">🗃️ Runner / Spare Parts Box Index</label>
+            <input type="text" id="kit-storage-box" placeholder="e.g. Bin #4 (Extra Hands &amp; Weapons), Original Box in Attic" />
+          </div>
+        </div>
+
+        <!-- IDEA 4: PRICE VS RETAIL / MSRP & RELEASE DATE -->
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="kit-price">Paid / Current Price</label>
+            <div class="input-inline">
+              <input type="number" step="0.01" id="kit-price" placeholder="0.00" />
+              <select id="kit-currency" style="max-width: 90px;">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+                <option value="CAD">CAD</option>
+                <option value="AUD">AUD</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="kit-retail-price">MSRP / Retail Price</label>
+            <input type="number" step="0.01" id="kit-retail-price" placeholder="Compare deal vs. MSRP" />
+          </div>
+          <div class="form-group">
+            <label for="kit-rating">Rating (1–5)</label>
+            <select id="kit-rating">
+              <option value="">Unrated</option>
+              <option value="5">★★★★★ (5 - Masterpiece)</option>
+              <option value="4">★★★★☆ (4 - Great)</option>
+              <option value="3">★★★☆☆ (3 - Solid)</option>
+              <option value="2">★★☆☆☆ (2 - Flawed)</option>
+              <option value="1">★☆☆☆☆ (1 - Poor)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-4">
+          <div class="form-group">
+            <label for="kit-release-date">Release / Pre-order Date</label>
+            <input type="date" id="kit-release-date" />
+          </div>
+          <div class="form-group">
+            <label for="kit-purchase-date">Purchase Date</label>
+            <input type="date" id="kit-purchase-date" />
+          </div>
+          <div class="form-group">
+            <label for="kit-started-date">Build Started</label>
+            <input type="date" id="kit-started-date" />
+          </div>
+          <div class="form-group">
+            <label for="kit-completed-date">Build Completed</label>
+            <input type="date" id="kit-completed-date" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="kit-store-url">Store / Pre-order / Reference Link</label>
+          <input type="url" id="kit-store-url" placeholder="https://..." />
+        </div>
+
+        <div class="form-group">
+          <label for="kit-notes">Build Notes / Paint Recipe / LED Mods</label>
+          <textarea id="kit-notes" rows="3" placeholder="Notes on water slides, custom paint mixes, LED wiring, articulation, or spare accessories..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-modal="kit-form-modal">Cancel</button>
+          <button type="submit" id="kit-save-btn" class="btn btn-primary">Save Kit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: KIT DETAIL (STANCES GALLERY, BUILD MANUALS, QUICK LOOKUPS, LOCATION) -->
+  <div id="kit-detail-modal" class="modal-backdrop hidden">
+    <div class="modal-panel modal-xl">
+      <div class="modal-header detail-header">
+        <div class="detail-title-wrap">
+          <div class="detail-badges">
+            <span id="detail-collection-badge" class="badge">Owned</span>
+            <span id="detail-category-badge" class="badge badge-outline">Gundam</span>
+            <span id="detail-grade-badge" class="badge badge-outline">MG 1/100</span>
+            <span id="detail-location-badge" class="badge badge-outline hidden">📍 Shelf</span>
+          </div>
+          <h2 id="detail-name">Kit Name</h2>
+          <p id="detail-subtitle" class="detail-subtitle"></p>
+        </div>
+
+        <div class="detail-header-actions">
+          <button type="button" id="detail-toggle-wishlist-btn" class="btn btn-secondary btn-sm">Move to Owned</button>
+          <button type="button" id="detail-edit-btn" class="btn btn-secondary btn-sm">✎ Edit Info</button>
+          <button type="button" id="detail-delete-btn" class="btn btn-danger btn-sm">🗑 Delete</button>
+          <button type="button" class="modal-close" data-close-modal="kit-detail-modal">&times;</button>
+        </div>
+      </div>
+
+      <div class="modal-body detail-body">
+        <!-- Quick Status Bar -->
+        <div class="detail-status-strip">
+          <div id="detail-status-selector-wrap" class="status-selector-group">
+            <label for="detail-quick-status">Current Status:</label>
+            <select id="detail-quick-status">
+              <option value="backlog">Backlog</option>
+              <option value="building">Building</option>
+              <option value="panel_lining">Panel Lining &amp; Decals</option>
+              <option value="painting">Painting &amp; Topcoat</option>
+              <option value="finished">Finished</option>
+              <option value="on_hold">On Hold</option>
+              <option value="wishlist">Wishlist</option>
+            </select>
+          </div>
+          <div id="detail-meta-pills" class="detail-meta-pills"></div>
+        </div>
+
+        <!-- IDEA 5: QUICK EXTERNAL DATABASE & MANUAL SCAN LOOKUP BAR -->
+        <div class="quick-lookup-strip">
+          <span class="lookup-label">🔍 Quick Manual &amp; Kit Lookup:</span>
+          <div id="detail-lookup-links" class="lookup-buttons"></div>
+        </div>
+
+        <!-- Detail Tabs -->
+        <div class="detail-tabs">
+          <button type="button" class="detail-tab active" data-detail-tab="stances">
+            📸 Stance Photos (<span id="detail-photo-count">0</span>)
+          </button>
+          <button type="button" class="detail-tab" data-detail-tab="manuals">
+            📘 Building Manuals (<span id="detail-manual-count">0</span>)
+          </button>
+          <button type="button" class="detail-tab" data-detail-tab="overview">
+            📋 Storage, Specs &amp; Build Notes
+          </button>
+        </div>
+
+        <!-- TAB 1: STANCE PHOTOS -->
+        <div id="detail-tab-stances" class="detail-tab-pane">
+          <form id="upload-photo-form" class="upload-bar">
+            <div class="upload-bar-inputs">
+              <div class="form-group">
+                <label for="photo-stance-input">Stance / Pose Name</label>
+                <input type="text" id="photo-stance-input" list="stance-suggestions" value="Action Pose" placeholder="e.g. Full Burst Mode, Front Standing, LED Lit" required />
+                <datalist id="stance-suggestions">
+                  <option value="Box Art / Unboxed Runners"></option>
+                  <option value="Front / Standard Standing"></option>
+                  <option value="Rear / Backpack Thrusters"></option>
+                  <option value="Dynamic Action Pose"></option>
+                  <option value="Full Burst / Weapons Deployed"></option>
+                  <option value="Aerial Stand Pose"></option>
+                  <option value="LED Illuminated / Night View"></option>
+                  <option value="Inner Frame / WIP Build"></option>
+                  <option value="Close-up / Cockpit &amp; Decals"></option>
+                </datalist>
+              </div>
+              <div class="form-group">
+                <label for="photo-caption-input">Caption / Angle Notes</label>
+                <input type="text" id="photo-caption-input" placeholder="Optional note about this stance..." />
+              </div>
+              <div class="form-group">
+                <label for="photo-file-input">Photo Files (JPG, PNG, WEBP)</label>
+                <input type="file" id="photo-file-input" accept=".jpg,.jpeg,.png,.webp,.gif,.avif" multiple required />
+              </div>
+              <label class="checkbox-inline">
+                <input type="checkbox" id="photo-cover-checkbox" />
+                <span>Set as Cover</span>
+              </label>
+              <button type="submit" id="photo-upload-btn" class="btn btn-primary">+ Upload Stance</button>
+            </div>
+          </form>
+
+          <div id="stances-gallery" class="stances-gallery"></div>
+        </div>
+
+        <!-- TAB 2: BUILDING MANUALS -->
+        <div id="detail-tab-manuals" class="detail-tab-pane hidden">
+          <form id="upload-manual-form" class="upload-bar">
+            <div class="upload-bar-inputs">
+              <div class="form-group">
+                <label for="manual-title-input">Manual Title</label>
+                <input type="text" id="manual-title-input" placeholder="e.g. Main Assembly Manual, Decal Placement Guide, LED Wiring PDF" required />
+              </div>
+              <div class="form-group">
+                <label for="manual-file-input">Upload File (PDF or Image Scan)</label>
+                <input type="file" id="manual-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" />
+              </div>
+              <div class="form-group">
+                <label for="manual-url-input">Or External Manual URL (e.g. Dalong / 1999.co.jp / Mech9)</label>
+                <input type="url" id="manual-url-input" placeholder="https://..." />
+              </div>
+              <div class="form-group">
+                <label for="manual-notes-input">Notes / Page Bookmarks</label>
+                <input type="text" id="manual-notes-input" placeholder="e.g. Stop at page 18 for LED routing" />
+              </div>
+              <button type="submit" id="manual-upload-btn" class="btn btn-primary">+ Add Manual</button>
+            </div>
+          </form>
+
+          <div id="manuals-list" class="manuals-list"></div>
+          <div id="manual-viewer-container" class="manual-viewer-container hidden">
+            <div class="manual-viewer-header">
+              <strong id="manual-viewer-title">Manual Preview</strong>
+              <div>
+                <a id="manual-viewer-open-tab" href="#" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Open in New Tab ↗</a>
+                <button type="button" id="manual-viewer-close" class="btn btn-ghost btn-sm">Close Preview</button>
+              </div>
+            </div>
+            <iframe id="manual-viewer-iframe" class="manual-viewer-iframe" title="Building Manual Viewer"></iframe>
+          </div>
+        </div>
+
+        <!-- TAB 3: OVERVIEW, STORAGE & SPECS -->
+        <div id="detail-tab-overview" class="detail-tab-pane hidden">
+          <div id="detail-specs-grid" class="detail-specs-grid"></div>
+          <div class="detail-notes-box">
+            <h4>Builder Notes, Paint Recipes &amp; Modifications</h4>
+            <p id="detail-notes-content"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX FOR STANCE PHOTOS -->
+  <div id="lightbox-modal" class="modal-backdrop lightbox-backdrop hidden">
+    <div class="lightbox-content">
+      <button type="button" class="lightbox-close" id="lightbox-close">&times;</button>
+      <img id="lightbox-img" src="" alt="Stance photo" />
+      <div class="lightbox-caption">
+        <strong id="lightbox-stance"></strong>
+        <span id="lightbox-text"></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=3"></script>
+</body>
+</html>

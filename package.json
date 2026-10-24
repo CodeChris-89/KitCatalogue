@@ -1,0 +1,15 @@
+{
+  "name": "kit-catalogue",
+  "version": "1.0.0",
+  "description": "Self-hosted Building Kits Catalogue for Unraid & Docker (Gundam, Moshow, Book Nooks, etc.)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node --no-warnings server/index.js",
+    "dev": "node --watch --no-warnings server/index.js",
+    "test": "node --no-warnings test/smoke.test.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,22 @@
+services:
+  kit-catalogue:
+    build: .
+    image: kit-catalogue:latest
+    container_name: KitCatalogue
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - DATA_DIR=/data
+      # Unraid standard user/group IDs (nobody:users = 99:100)
+      - PUID=${PUID:-99}
+      - PGID=${PGID:-100}
+      - TZ=${TZ:-Europe/Berlin}
+    volumes:
+      # On Unraid, set KITCATALOGUE_APPDATA=/mnt/user/appdata/kit-catalogue in .env or edit directly below
+      - ${KITCATALOGUE_APPDATA:-./data}:/data
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.webui: "http://[IP]:[PORT:3000]/"
+      net.unraid.docker.icon: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/heimdall.png"

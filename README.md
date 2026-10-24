@@ -1,5 +1,8 @@
 # KitCatalogue — Building Kits & Mecha Hangar (Unraid / Docker)
 
+> [!NOTE]
+> **AI Disclosure:** This application was extensively built and architected using Generative AI (Antigravity with Google Gemini & Claude models) in collaboration with the repository owner.
+
 A self-hosted web application for cataloguing **Building Kits** (Gundam / Gunpla, Moshow Toys, Book Nooks, 30 Minutes Missions, Zoids, Kotobukiya, and scale models). Designed to run as a single, zero-external-dependency Docker container on **Unraid** with **Docker Compose**.
 
 ## Key Features

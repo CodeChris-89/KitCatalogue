@@ -1,7 +1,8 @@
 services:
   kit-catalogue:
-    build: .
-    image: kit-catalogue:latest
+    image: ghcr.io/codechris-89/kitcatalogue:latest
+    build:
+      context: .
     container_name: kit-catalogue
     restart: unless-stopped
     ports:
@@ -13,4 +14,4 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-UTC}
     volumes:
-      - ${DATA_PATH:-${KITCATALOGUE_APPDATA:-./data}}:/data
+      - ${DATA_PATH:-./data}:/data

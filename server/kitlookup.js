@@ -1,6 +1,6 @@
 const { getDb } = require('./db');
 const { encryptSecret, decryptSecret, maskApiKey } = require('./crypto');
-const { isSafeUrl, USER_AGENT, searchWebImages } = require('./websearch');
+const { isSafeUrl, isAllowedByRobots, USER_AGENT, searchWebImages } = require('./websearch');
 
 const PROVIDER_DEFAULTS = {
   gemini: {
@@ -639,7 +639,11 @@ function parseKitMetadataFromText(rawTitle = '', rawSnippet = '', sourceUrl = ''
     releaseDate,
     storeUrl: sourceUrl || extra.storeUrl || '',
     imageUrl: extra.imageUrl || '',
-    notes: extra.notes || (rawSnippet ? rawSnippet.slice(0, 280).trim() : '')
+    notes:
+      extra.notes ||
+      (rawSnippet
+        ? `${rawSnippet.slice(0, 240).trim()}${extra.sourceName ? ` [Source: ${extra.sourceName}]` : ''}`
+        : '')
   };
 }
 
@@ -717,12 +721,15 @@ async function searchFandomWiki(query, limit = 5) {
         .sort((a, b) => (a.index || 99) - (b.index || 99))
         .map((p) => {
           const parsed = parseKitMetadataFromText(p.title, p.extract || '', p.fullurl || '', {
-            imageUrl: p.thumbnail?.source || ''
+            imageUrl: p.thumbnail?.source || '',
+            sourceName: 'Gundam / Gunpla Wiki'
           });
           return {
             ...parsed,
             sourceName: 'Gundam / Gunpla Wiki',
-            sourceUrl: p.fullurl || ''
+            sourceUrl: p.fullurl || '',
+            license: 'CC BY-SA 3.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/'
           };
         });
 
@@ -801,6 +808,12 @@ async function scrapeProductUrlMetadata(targetUrl) {
     throw new Error('URL blocked by SSRF security policy (must be a public HTTP/HTTPS address).');
   }
 
+  // Check robots.txt and machine-readable opt-outs (§ 44b Abs. 3 UrhG)
+  const allowed = await isAllowedByRobots(targetUrl);
+  if (!allowed) {
+    throw new Error('Automated extraction disallowed by target site robots.txt policy (§ 44b UrhG opt-out).');
+  }
+
   const res = await fetch(targetUrl, {
     headers: {
       'User-Agent': USER_AGENT,
@@ -815,6 +828,15 @@ async function scrapeProductUrlMetadata(targetUrl) {
   }
 
   const html = await res.text();
+
+  // Check for HTML meta robots tags (noindex, nosnippet, noarchive)
+  const metaRobotsMatch = html.match(/<meta[^>]+name=["']robots["'][^>]+content=["']([^"']+)["']/i);
+  if (metaRobotsMatch) {
+    const robotsPolicy = metaRobotsMatch[1].toLowerCase();
+    if (robotsPolicy.includes('noindex') || robotsPolicy.includes('none')) {
+      throw new Error('Automated extraction disallowed by HTML meta robots policy (noindex).');
+    }
+  }
 
   // Extract <title>
   const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);

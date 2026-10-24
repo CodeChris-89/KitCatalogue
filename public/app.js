@@ -714,7 +714,7 @@
       $('kit-category').value = 'Gundam / Gunpla';
       $('kit-currency').value = 'USD';
       $('kit-priority').value = 'medium';
-      $('kit-auto-crawl').checked = true;
+      $('kit-auto-crawl').checked = false;
       $('kit-auto-crawl-group').classList.remove('hidden');
     }
     if (kit) {
@@ -1473,6 +1473,14 @@
       if ($('admin-tagline-input') && data.settings && data.settings.appTagline) {
         $('admin-tagline-input').value = data.settings.appTagline;
       }
+      if (data.settings?.legal) {
+        if ($('admin-impressum-input')) {
+          $('admin-impressum-input').value = data.settings.legal.impressumText || '';
+        }
+        if ($('admin-privacy-input')) {
+          $('admin-privacy-input').value = data.settings.legal.privacyText || '';
+        }
+      }
 
       const tbody = $('admin-users-tbody');
       tbody.innerHTML = data.users
@@ -1562,6 +1570,30 @@
       });
     } catch (err) {
       showToast(err.message, 'error');
+    }
+  }
+
+  async function openLegalModal() {
+    try {
+      const data = await api('/api/legal');
+      if ($('legal-trademark-text')) {
+        $('legal-trademark-text').textContent = data.trademarkNotice || '';
+      }
+      if ($('legal-copyright-text')) {
+        $('legal-copyright-text').textContent = data.copyrightNotice || '';
+      }
+      if ($('legal-impressum-content')) {
+        $('legal-impressum-content').textContent =
+          data.impressumText || 'Not configured by server administrator.';
+      }
+      if ($('legal-privacy-content')) {
+        $('legal-privacy-content').textContent =
+          data.privacyText ||
+          'When accessing this service, technical connection data (e.g. IP address, browser user-agent) is processed temporarily to transmit HTTP content.';
+      }
+      $('legal-modal').classList.remove('hidden');
+    } catch (err) {
+      showToast(err.message || 'Failed to load legal information', 'error');
     }
   }
 
@@ -2228,6 +2260,38 @@
         showToast(err.message, 'error');
       }
     });
+
+    if ($('admin-legal-form')) {
+      $('admin-legal-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await api('/api/admin/settings', {
+            method: 'PUT',
+            body: {
+              impressumText: $('admin-impressum-input').value,
+              privacyText: $('admin-privacy-input').value
+            }
+          });
+          showToast('Legal Notice & Impressum updated!', 'success');
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      });
+    }
+
+    if ($('auth-legal-link')) {
+      $('auth-legal-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        openLegalModal();
+      });
+    }
+
+    if ($('showcase-legal-btn')) {
+      $('showcase-legal-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        openLegalModal();
+      });
+    }
 
     // Close modals
     document.querySelectorAll('[data-close-modal]').forEach((btn) => {

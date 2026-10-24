@@ -13,7 +13,9 @@ const {
   isRegistrationAllowed,
   setRegistrationAllowed,
   getAppTagline,
-  setAppTagline
+  setAppTagline,
+  getLegalSettings,
+  setLegalSettings
 } = require('./auth');
 const { parseMultipart } = require('./multipart');
 const { searchWebImages, attachImageFromUrl, autoCrawlCoverImage } = require('./websearch');
@@ -56,6 +58,13 @@ const VALID_STATUSES = [
   'wishlist'
 ];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
+
+const LEGAL_NOTICE = {
+  trademarkNotice:
+    'Gundam, Gunpla, Bandai Spirits, Moshow Toys, Zoids, Kotobukiya, and related marks/logos are trademarks of their respective owners (e.g. Bandai Namco Holdings Inc., Sunrise, Sotsu, Kotobukiya Co., Ltd.). KitCatalogue is an independent, non-commercial self-hosted enthusiast application for personal hobby organization and is not affiliated with, endorsed by, or sponsored by any kit manufacturer.',
+  copyrightNotice:
+    'Photos and materials uploaded to this server are subject to copyright. When sharing Public Showcase galleries, users must ensure they own the necessary rights to all displayed photos (e.g. photos of your own physical builds). Auto-crawled third-party imagery and binary manual scans are restricted from open public distribution pursuant to applicable German and EU copyright laws (§ 16, § 19a UrhG).'
+};
 
 // Standard companion security headers (modern-web-guidance)
 const SECURITY_HEADERS = {
@@ -103,20 +112,31 @@ function readJsonBody(req, maxBytes = 100 * 1024 * 1024) {
 
 function hydrateKit(kitRow, db, showcaseToken = '') {
   if (!kitRow) return null;
+  const isShowcase = Boolean(showcaseToken);
   const suffix = showcaseToken ? `?showcase=${encodeURIComponent(showcaseToken)}` : '';
-  const photos = db
-    .prepare(
-      `SELECT id, kit_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover, sort_order, created_at
+
+  // In showcase mode: only serve user's own physical build photos (is_web_import == 0)
+  // to prevent unauthorized public re-distribution of copyrighted web imagery (§ 19a UrhG)
+  const photoQuery = isShowcase
+    ? `SELECT id, kit_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover, sort_order, is_web_import, source_url, created_at
+       FROM kit_photos
+       WHERE kit_id = ? AND is_web_import = 0
+       ORDER BY is_cover DESC, sort_order ASC, id ASC`
+    : `SELECT id, kit_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover, sort_order, is_web_import, source_url, created_at
        FROM kit_photos
        WHERE kit_id = ?
-       ORDER BY is_cover DESC, sort_order ASC, id ASC`
-    )
+       ORDER BY is_cover DESC, sort_order ASC, id ASC`;
+
+  const photos = db
+    .prepare(photoQuery)
     .all(kitRow.id)
     .map((p) => ({
       ...p,
       url: `/api/files/photos/${p.filename}${suffix}`
     }));
 
+  // In showcase mode: do not allow anonymous public downloading of copyrighted manual PDF scans (§ 16 / § 19a UrhG).
+  // Only display title and external manufacturer URLs.
   const manuals = db
     .prepare(
       `SELECT id, kit_id, title, filename, original_name, mime_type, file_size, external_url, notes, created_at
@@ -127,7 +147,9 @@ function hydrateKit(kitRow, db, showcaseToken = '') {
     .all(kitRow.id)
     .map((m) => ({
       ...m,
-      url: m.filename ? `/api/files/manuals/${m.filename}${suffix}` : m.external_url
+      url: isShowcase
+        ? (m.external_url || null)
+        : (m.filename ? `/api/files/manuals/${m.filename}${suffix}` : m.external_url)
     }));
 
   const coverPhoto = photos.find((p) => p.is_cover) || photos[0] || null;
@@ -187,7 +209,19 @@ async function handleApi(req, res, urlObj) {
         displayName: owner.display_name
       },
       tagline: getAppTagline(),
+      legal: {
+        ...LEGAL_NOTICE,
+        ...getLegalSettings()
+      },
       kits
+    });
+  }
+
+  // Legal Notice & Impressum Endpoint (§ 5 DDG / § 13 DSGVO)
+  if (pathname === '/api/legal' && method === 'GET') {
+    return sendJson(res, 200, {
+      ...LEGAL_NOTICE,
+      ...getLegalSettings()
     });
   }
 
@@ -195,7 +229,7 @@ async function handleApi(req, res, urlObj) {
   if (pathname.startsWith('/api/files/photos/') && method === 'GET') {
     const filename = path.basename(decodeURIComponent(pathname.replace('/api/files/photos/', '')));
     const photoRow = db
-      .prepare('SELECT filename, mime_type, user_id FROM kit_photos WHERE filename = ?')
+      .prepare('SELECT filename, mime_type, user_id, is_web_import FROM kit_photos WHERE filename = ?')
       .get(filename);
     if (!photoRow) {
       return sendJson(res, 404, { error: 'Photo not found.' });
@@ -212,11 +246,15 @@ async function handleApi(req, res, urlObj) {
           'SELECT id FROM users WHERE id = ? AND showcase_token = ? AND showcase_enabled = 1 AND disabled = 0'
         )
         .get(photoRow.user_id, showcaseToken);
-      if (showcaseOwner) authorized = true;
+      // In public showcase, only user-uploaded physical photos (is_web_import === 0) are served
+      // Web-crawled/imported third-party imagery is excluded from public redistribution (§ 19a UrhG)
+      if (showcaseOwner && (!photoRow.is_web_import || photoRow.is_web_import === 0)) {
+        authorized = true;
+      }
     }
 
     if (!authorized) {
-      return sendJson(res, 404, { error: 'Photo not found.' });
+      return sendJson(res, 403, { error: 'Photo access restricted.' });
     }
 
     const filePath = path.join(PHOTOS_DIR, photoRow.filename);
@@ -247,21 +285,15 @@ async function handleApi(req, res, urlObj) {
     }
 
     const currentUser = getAuthenticatedUser(req);
-    const showcaseToken = urlObj.searchParams.get('showcase') || '';
-    let authorized =
+    // For copyright compliance (§ 16 / § 19a UrhG), binary manual file downloads are restricted
+    // to the authenticated kit owner or administrator (never served to anonymous public showcase visitors).
+    const authorized =
       currentUser && (manualRow.user_id === currentUser.id || currentUser.role === 'admin');
 
-    if (!authorized && showcaseToken) {
-      const showcaseOwner = db
-        .prepare(
-          'SELECT id FROM users WHERE id = ? AND showcase_token = ? AND showcase_enabled = 1 AND disabled = 0'
-        )
-        .get(manualRow.user_id, showcaseToken);
-      if (showcaseOwner) authorized = true;
-    }
-
     if (!authorized) {
-      return sendJson(res, 404, { error: 'Manual not found.' });
+      return sendJson(res, 403, {
+        error: 'Manual file downloads are restricted to authenticated owners for copyright compliance (§ 16 UrhG).'
+      });
     }
 
     const filePath = path.join(MANUALS_DIR, manualRow.filename);
@@ -288,6 +320,10 @@ async function handleApi(req, res, urlObj) {
       needsSetup: userCount === 0,
       allowRegistration: isRegistrationAllowed(),
       tagline: getAppTagline(),
+      legal: {
+        ...LEGAL_NOTICE,
+        ...getLegalSettings()
+      },
       user: user
         ? {
             id: user.id,
@@ -861,8 +897,8 @@ async function handleApi(req, res, urlObj) {
       }
     }
 
-    // Auto-crawl title / box art image from the web if enabled (default: true) and no cover was uploaded yet
-    const autoCrawl = body.auto_crawl_image !== false && body.auto_crawl_image !== 'false';
+    // Auto-crawl title / box art image from the web only if explicitly requested (default: false to prevent unauthorized copying § 16 UrhG)
+    const autoCrawl = body.auto_crawl_image === true || body.auto_crawl_image === 'true';
     if (!coverAttached && autoCrawl) {
       const searchTerms = [body.brand, body.grade_scale, name, body.model_number]
         .filter(Boolean)
@@ -1052,8 +1088,8 @@ async function handleApi(req, res, urlObj) {
       const info = db
         .prepare(
           `INSERT INTO kit_photos (
-            kit_id, user_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            kit_id, user_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover, is_web_import, source_url
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '')`
         )
         .run(
           kitId,
@@ -1099,7 +1135,8 @@ async function handleApi(req, res, urlObj) {
         fallbackUrl: String(body.fallback_url || '').trim(),
         stanceName: String(body.stance_name || 'Cover / Box Art').trim(),
         caption: String(body.caption || 'Web search import').trim(),
-        isCover: body.is_cover !== false
+        isCover: body.is_cover !== false,
+        sourceUrl: imageUrl
       });
       const updatedKit = db.prepare('SELECT * FROM kits WHERE id = ?').get(kitId);
       return sendJson(res, 201, { kit: hydrateKit(updatedKit, db), attached });
@@ -1284,12 +1321,13 @@ async function handleApi(req, res, urlObj) {
         users,
         settings: {
           allowRegistration: isRegistrationAllowed(),
-          appTagline: getAppTagline()
+          appTagline: getAppTagline(),
+          legal: getLegalSettings()
         }
       });
     }
 
-    // PUT /api/admin/settings - Update server settings (tagline, registration)
+    // PUT /api/admin/settings - Update server settings (tagline, registration, impressum, privacy)
     if (pathname === '/api/admin/settings' && method === 'PUT') {
       const body = await readJsonBody(req);
       if (body.allowRegistration !== undefined) {
@@ -1298,10 +1336,17 @@ async function handleApi(req, res, urlObj) {
       if (body.appTagline !== undefined) {
         setAppTagline(body.appTagline);
       }
+      if (body.impressumText !== undefined || body.privacyText !== undefined) {
+        setLegalSettings({
+          impressumText: body.impressumText,
+          privacyText: body.privacyText
+        });
+      }
       return sendJson(res, 200, {
         settings: {
           allowRegistration: isRegistrationAllowed(),
-          appTagline: getAppTagline()
+          appTagline: getAppTagline(),
+          legal: getLegalSettings()
         }
       });
     }

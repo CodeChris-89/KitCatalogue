@@ -61,3 +61,20 @@ Run the automated end-to-end test suite:
 ```bash
 npm test
 ```
+
+---
+
+## Legal & Copyright Compliance (German & EU Law)
+
+- **Trademark Non-Affiliation (§ 23 MarkenG):** All product names, trademarks, and logos (e.g., *Gundam*, *Gunpla*, *Bandai Spirits*, *Moshow Toys*, *Zoids*, *Kotobukiya*) are property of their respective trademark owners (Bandai Namco Holdings Inc., Sunrise, Sotsu, Kotobukiya Co., Ltd.). KitCatalogue is an independent, non-commercial self-hosted community application for personal hobby organization and is not affiliated with, endorsed by, or sponsored by any model kit manufacturer.
+- **Copyright & Web Media (§ 16, § 19a, § 53 UrhG):**
+  - Automated crawling of web images is **opt-in only** and disabled by default.
+  - In compliance with German copyright law, web-imported imagery and uploaded manual scans are restricted from open re-distribution in **Public Showcase** mode. Public showcases only serve user-uploaded photographs of their own physical builds.
+  - Users are responsible for ensuring they possess the necessary rights for any media uploaded or published.
+- **Robots.txt & Machine-Readable Opt-Outs (§ 44b Abs. 3 UrhG):**
+  - Web lookup and scraper functions identify transparently via `KitCatalogue/1.0` User-Agent and respect `robots.txt` directives and `<meta name="robots" content="noindex">` tags.
+  - Primary media search utilizes the Wikimedia Commons API for freely reusable Creative Commons / Public Domain images.
+  - Fandom wiki lookups provide attribution under the Creative Commons Attribution-ShareAlike (CC BY-SA 3.0) license.
+- **Provider Identification & Privacy (§ 5 DDG, Art. 13 DSGVO):**
+  - For server operators in Germany or the EU who make their instance publicly accessible, an **Impressum** and **Privacy Notice** can be configured directly in **Admin Settings**.
+

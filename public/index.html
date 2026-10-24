@@ -17,7 +17,10 @@
     <div>
       <strong>🌐 Public Hangar Showcase:</strong> Viewing <span id="showcase-owner-name"></span>'s Building Kit Collection (Read-Only)
     </div>
-    <a href="/" class="btn btn-secondary btn-sm">Sign In to Your Hangar</a>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button type="button" id="showcase-legal-btn" class="btn btn-ghost btn-sm" style="color: var(--text-muted); font-size: 0.82rem;">§ Legal &amp; Impressum</button>
+      <a href="/" class="btn btn-secondary btn-sm">Sign In to Your Hangar</a>
+    </div>
   </div>
 
   <!-- AUTHENTICATION / FIRST-ADMIN SETUP SCREEN -->
@@ -84,6 +87,11 @@
           The code has <strong>not been reviewed or audited by human software engineering or security experts</strong>.
           Pure vibes. Run self-hosted at your own discretion.
         </p>
+        <div style="margin-top: 10px; font-size: 0.78rem; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+          <strong>⚖️ Legal &amp; Trademark Notice (§ 23 MarkenG):</strong>
+          Gundam, Gunpla, Bandai Spirits, Moshow Toys, Zoids, Kotobukiya, and related trademarks are the property of their respective owners. KitCatalogue is an independent enthusiast project and is not affiliated with or endorsed by any kit manufacturer.
+          <br /><a href="#" id="auth-legal-link" style="color: var(--primary); text-decoration: underline; margin-top: 4px; display: inline-block;">View Legal Notice &amp; Impressum (§ 5 DDG)</a>
+        </div>
       </div>
     </div>
   </div>
@@ -417,6 +425,26 @@
                 <input type="text" id="admin-tagline-input" maxlength="50" placeholder="Model Hangar" required />
               </div>
               <button type="submit" id="admin-tagline-save-btn" class="btn btn-primary">Save Tagline</button>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <h3>⚖️ Legal Notice &amp; Impressum Configuration (§ 5 DDG / DSGVO)</h3>
+                <p>If you make your KitCatalogue instance publicly accessible, configure your provider identification (Impressum) and privacy statement for compliance.</p>
+              </div>
+            </div>
+            <form id="admin-legal-form" class="upload-bar-inputs" style="flex-direction: column; gap: 10px; margin-top: 8px;">
+              <div class="form-group" style="width: 100%;">
+                <label for="admin-impressum-input">Impressum / Provider Identification (§ 5 DDG)</label>
+                <textarea id="admin-impressum-input" rows="3" placeholder="Operator Name, Address, Contact Email..."></textarea>
+              </div>
+              <div class="form-group" style="width: 100%;">
+                <label for="admin-privacy-input">Privacy Notice Excerpt (Art. 13 DSGVO)</label>
+                <textarea id="admin-privacy-input" rows="2" placeholder="Information regarding IP logging in server requests..."></textarea>
+              </div>
+              <button type="submit" id="admin-legal-save-btn" class="btn btn-primary" style="align-self: flex-start;">Save Legal Notice</button>
             </form>
           </div>
 
@@ -850,8 +878,8 @@
 
         <div id="kit-auto-crawl-group" class="form-group">
           <label class="checkbox-inline" style="padding-bottom: 0;">
-            <input type="checkbox" id="kit-auto-crawl" checked />
-            <span>🌐 Auto-crawl title/box art image from the web on creation</span>
+            <input type="checkbox" id="kit-auto-crawl" />
+            <span>🌐 Auto-crawl cover image from the web (Personal private use only under § 53 UrhG; requires copyright compliance)</span>
           </label>
         </div>
 
@@ -1069,6 +1097,40 @@
     </div>
   </div>
 
-  <script src="/app.js?v=8"></script>
+  <!-- MODAL: LEGAL NOTICE & IMPRESSUM (§ 5 DDG / DSGVO / TRADEMARKS) -->
+  <div id="legal-modal" class="modal-backdrop hidden">
+    <div class="modal-panel modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3>Legal Information, Impressum &amp; Copyright</h3>
+          <p class="subtitle" style="margin-top: 2px;">Rechtliche Hinweise gem. § 5 DDG, UrhG und MarkenG</p>
+        </div>
+        <button type="button" class="modal-close" data-close-modal="legal-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; line-height: 1.6;">
+        <div>
+          <h4 style="margin-bottom: 6px;">1. Trademark &amp; Brand Notice (§ 23 MarkenG)</h4>
+          <p id="legal-trademark-text" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 6px;">2. Copyright &amp; Media Licensing (UrhG)</h4>
+          <p id="legal-copyright-text" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 6px;">3. Provider Identification / Impressum (§ 5 DDG)</h4>
+          <div id="legal-impressum-content" style="background: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); font-size: 0.88rem; white-space: pre-wrap;">Not configured by server administrator.</div>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 6px;">4. Privacy Notice (Art. 13 DSGVO)</h4>
+          <div id="legal-privacy-content" style="background: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); font-size: 0.88rem; white-space: pre-wrap;">When accessing this service, technical connection data (e.g. IP address, browser user-agent) is processed temporarily to transmit HTTP content.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-close-modal="legal-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=9"></script>
 </body>
 </html>

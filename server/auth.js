@@ -120,6 +120,31 @@ function setAppTagline(tagline) {
   return clean;
 }
 
+function getLegalSettings() {
+  const db = getDb();
+  const impRow = db.prepare("SELECT value FROM settings WHERE key = 'impressum_text'").get();
+  const privRow = db.prepare("SELECT value FROM settings WHERE key = 'privacy_text'").get();
+  return {
+    impressumText: impRow && impRow.value ? impRow.value : '',
+    privacyText: privRow && privRow.value ? privRow.value : ''
+  };
+}
+
+function setLegalSettings({ impressumText, privacyText }) {
+  const db = getDb();
+  if (impressumText !== undefined) {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('impressum_text', ?)").run(
+      String(impressumText).trim()
+    );
+  }
+  if (privacyText !== undefined) {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('privacy_text', ?)").run(
+      String(privacyText).trim()
+    );
+  }
+  return getLegalSettings();
+}
+
 module.exports = {
   hashPassword,
   verifyPassword,
@@ -130,5 +155,7 @@ module.exports = {
   isRegistrationAllowed,
   setRegistrationAllowed,
   getAppTagline,
-  setAppTagline
+  setAppTagline,
+  getLegalSettings,
+  setLegalSettings
 };

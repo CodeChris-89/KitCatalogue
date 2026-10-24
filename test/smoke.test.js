@@ -154,6 +154,7 @@ async function runTests() {
     const manualResult = await res.json();
     assert.strictEqual(manualResult.kit.manuals.length, 1);
     assert.strictEqual(manualResult.kit.manuals[0].title, 'Main Assembly Manual & Decal Guide');
+    const uploadedManualFilename = manualResult.kit.manuals[0].filename;
     console.log('✓ Uploaded PDF building manual');
 
     // 7. Verify Public Showcase Mode (Idea 6)
@@ -288,6 +289,34 @@ async function runTests() {
     assert.strictEqual(extractData.kit.category, 'Book Nook / Diorama');
     assert.strictEqual(extractData.kit.modelNumber, 'TGB01');
     console.log('✓ Verified Per-User AES-256-GCM Encrypted AI Key Isolation & Smart Kit Autofill');
+
+    // 11. Verify Legal & Copyright Compliance (UrhG, DDG, Trademark Notices, Showcase Restrictions)
+    res = await fetch(`${baseUrl}/api/legal`);
+    assert.strictEqual(res.status, 200);
+    const legalData = await res.json();
+    assert.ok(legalData.trademarkNotice.includes('Bandai'), 'Should contain trademark disclaimer');
+    assert.ok(legalData.copyrightNotice.includes('UrhG'), 'Should contain UrhG copyright notice');
+
+    // Admin configures Impressum & Privacy statement (§ 5 DDG, Art. 13 DSGVO)
+    res = await fetch(`${baseUrl}/api/admin/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+      body: JSON.stringify({
+        impressumText: 'Max Mustermann, Musterstr. 1, 12345 Berlin, info@example.com',
+        privacyText: 'IP addresses logged strictly for transmission.'
+      })
+    });
+    assert.strictEqual(res.status, 200);
+
+    res = await fetch(`${baseUrl}/api/legal`);
+    const updatedLegal = await res.json();
+    assert.strictEqual(updatedLegal.impressumText, 'Max Mustermann, Musterstr. 1, 12345 Berlin, info@example.com');
+
+    // Verify public showcase blocks anonymous binary manual download (§ 16 / § 19a UrhG)
+    res = await fetch(`${baseUrl}/api/files/manuals/${uploadedManualFilename}?showcase=${scSettings.showcaseToken}`);
+    assert.strictEqual(res.status, 403, 'Anonymous public showcase visitors must not download manual files (§ 16 UrhG)');
+
+    console.log('✓ Verified Legal & Copyright Compliance (§ 16/19a UrhG, § 5 DDG, § 23 MarkenG)');
 
     console.log('\nALL SMOKE TESTS PASSED!');
   } finally {

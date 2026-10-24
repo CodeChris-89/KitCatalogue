@@ -37,6 +37,8 @@ function getDb() {
 
     INSERT OR IGNORE INTO settings (key, value) VALUES ('allow_registration', 'true');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('app_tagline', 'Model Hangar');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('impressum_text', '');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('privacy_text', '');
 
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,6 +139,8 @@ function getDb() {
   ensureColumn(db, 'kits', 'storage_box', "TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, 'kits', 'retail_price', 'REAL');
   ensureColumn(db, 'kits', 'release_date', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, 'kit_photos', 'is_web_import', 'INTEGER NOT NULL DEFAULT 0');
+  ensureColumn(db, 'kit_photos', 'source_url', "TEXT NOT NULL DEFAULT ''");
 
   dbInstance = db;
   return db;

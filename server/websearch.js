@@ -3,8 +3,9 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const { getDb, PHOTOS_DIR } = require('./db');
 
+// Transparent, honest User-Agent identifying the self-hosted application
 const USER_AGENT =
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+  'KitCatalogue/1.0 (+https://github.com/CodeChris-89/KitCatalogue; Collector Assistant; Open-Source)';
 
 /**
  * Validates that a URL does not target loopback, private networks, or metadata services (SSRF protection).
@@ -44,9 +45,124 @@ function isSafeUrl(rawUrl) {
 }
 
 /**
- * Primary Provider: DuckDuckGo Image Search JSON API
+ * In-memory cache for robots.txt rules to avoid hammering servers.
+ * Implements machine-readable opt-out compliance (§ 44b Abs. 3 UrhG / DSM-RL).
+ */
+const robotsCache = new Map();
+
+function parseRobotsTxt(text) {
+  const disallowed = [];
+  const lines = text.split(/\r?\n/);
+  let relevantUserAgent = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.split('#')[0].trim();
+    if (!line) continue;
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) continue;
+    const key = line.slice(0, colonIdx).trim().toLowerCase();
+    const val = line.slice(colonIdx + 1).trim();
+
+    if (key === 'user-agent') {
+      const targetAgent = val.toLowerCase();
+      relevantUserAgent = targetAgent === '*' || targetAgent.includes('kitcatalogue');
+    } else if (relevantUserAgent && key === 'disallow') {
+      if (val) disallowed.push(val);
+    }
+  }
+  return { disallowed };
+}
+
+async function isAllowedByRobots(targetUrl, userAgent = USER_AGENT) {
+  if (!isSafeUrl(targetUrl)) return false;
+  try {
+    const parsed = new URL(targetUrl);
+    const hostKey = parsed.host.toLowerCase();
+    let rules = robotsCache.get(hostKey);
+
+    if (!rules) {
+      const robotsUrl = `${parsed.protocol}//${parsed.host}/robots.txt`;
+      try {
+        const res = await fetch(robotsUrl, {
+          headers: { 'User-Agent': userAgent },
+          signal: AbortSignal.timeout(3500)
+        });
+        if (res.ok) {
+          const text = await res.text();
+          rules = parseRobotsTxt(text);
+        } else {
+          rules = { disallowed: [] };
+        }
+      } catch (_) {
+        rules = { disallowed: [] };
+      }
+      robotsCache.set(hostKey, rules);
+    }
+
+    const pathname = parsed.pathname || '/';
+    for (const dis of rules.disallowed) {
+      if (dis === '/' || pathname.startsWith(dis)) {
+        return false;
+      }
+    }
+    return true;
+  } catch (_) {
+    return true;
+  }
+}
+
+/**
+ * Primary Provider: Wikimedia Commons Public Domain / Creative Commons Open Media API
+ * 100% legal, royalty-free, authorized reuse under CC licenses.
+ */
+async function searchWikimediaCommons(cleanQuery, limit = 20) {
+  try {
+    const endpoint = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanQuery)}&gsrnamespace=6&gsrlimit=${limit}&prop=imageinfo&iiprop=url|size|extmetadata&format=json`;
+    const res = await fetch(endpoint, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'application/json'
+      },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pages = data?.query?.pages;
+    if (!pages) return [];
+
+    const results = [];
+    for (const page of Object.values(pages)) {
+      const info = page.imageinfo?.[0];
+      if (!info || !info.url) continue;
+      const meta = info.extmetadata || {};
+      const license = meta.LicenseShortName?.value || 'Creative Commons';
+      const author = meta.Artist?.value ? String(meta.Artist.value).replace(/<[^>]+>/g, '').trim() : '';
+
+      results.push({
+        title: page.title ? page.title.replace(/^File:/i, '') : cleanQuery,
+        image: info.url,
+        thumbnail: info.thumburl || info.url,
+        width: info.width || 0,
+        height: info.height || 0,
+        source: info.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`,
+        license: license,
+        author: author,
+        provider: 'Wikimedia Commons'
+      });
+    }
+    return results;
+  } catch (_) {
+    return [];
+  }
+}
+
+/**
+ * Secondary Provider: DuckDuckGo Image Search
  */
 async function searchDuckDuckGoImages(cleanQuery, limit = 20) {
+  const allowed = await isAllowedByRobots('https://duckduckgo.com/');
+  if (!allowed) return [];
+
   const pageRes = await fetch(
     `https://duckduckgo.com/?q=${encodeURIComponent(cleanQuery)}&iax=images&ia=images`,
     {
@@ -88,14 +204,19 @@ async function searchDuckDuckGoImages(cleanQuery, limit = 20) {
     thumbnail: r.thumbnail || r.image,
     width: r.width,
     height: r.height,
-    source: r.source || ''
+    source: r.source || '',
+    license: 'Web Reference',
+    provider: 'DuckDuckGo Web'
   }));
 }
 
 /**
- * Secondary Provider: Bing Images HTML Scraper fallback
+ * Secondary Provider: Bing Images Search
  */
 async function searchBingImages(cleanQuery, limit = 20) {
+  const allowed = await isAllowedByRobots('https://www.bing.com/');
+  if (!allowed) return [];
+
   const res = await fetch(
     `https://www.bing.com/images/search?q=${encodeURIComponent(cleanQuery)}&form=HDRSC2&first=1`,
     {
@@ -126,7 +247,9 @@ async function searchBingImages(cleanQuery, limit = 20) {
           thumbnail: meta.turl || meta.murl,
           width: 0,
           height: 0,
-          source: meta.purl || ''
+          source: meta.purl || '',
+          license: 'Web Reference',
+          provider: 'Bing Web'
         });
       }
     } catch (_) {
@@ -137,13 +260,25 @@ async function searchBingImages(cleanQuery, limit = 20) {
 }
 
 /**
- * Searches the web for images using DuckDuckGo with automatic fallback to Bing Images.
- * Returns an array of { title, image, thumbnail, width, height, source }
+ * Searches for images using Wikimedia Commons (free/open media) first,
+ * with optional fallback to web index search.
+ * Returns an array of { title, image, thumbnail, width, height, source, license, provider }
  */
 async function searchWebImages(query, limit = 20) {
   if (!query || !query.trim()) return [];
   const cleanQuery = query.trim();
 
+  // 1. Try Wikimedia Commons first (Open-Licensed Creative Commons / Public Domain)
+  try {
+    const wikiResults = await searchWikimediaCommons(cleanQuery, limit);
+    if (wikiResults && wikiResults.length > 0) {
+      return wikiResults;
+    }
+  } catch (err) {
+    console.error('Wikimedia Commons search error:', err.message);
+  }
+
+  // 2. Secondary fallback: DuckDuckGo
   try {
     const ddgResults = await searchDuckDuckGoImages(cleanQuery, limit);
     if (ddgResults && ddgResults.length > 0) {
@@ -153,6 +288,7 @@ async function searchWebImages(query, limit = 20) {
     console.error('DuckDuckGo image search error:', err.message);
   }
 
+  // 3. Tertiary fallback: Bing
   try {
     const bingResults = await searchBingImages(cleanQuery, limit);
     if (bingResults && bingResults.length > 0) {
@@ -168,6 +304,7 @@ async function searchWebImages(query, limit = 20) {
 /**
  * Downloads an image from a URL and attaches it to the specified kit as a stance photo (optionally as cover).
  * Supports fallbackUrl (e.g. thumbnail) if the primary high-res origin blocks hotlinking.
+ * Flags image as web-imported and records source origin for copyright audit.
  */
 async function attachImageFromUrl(kitId, userId, imageUrl, options = {}) {
   const db = getDb();
@@ -175,7 +312,8 @@ async function attachImageFromUrl(kitId, userId, imageUrl, options = {}) {
     fallbackUrl = '',
     stanceName = 'Cover / Box Art',
     caption = 'Web image import',
-    isCover = true
+    isCover = true,
+    sourceUrl = ''
   } = options;
 
   const kit = db.prepare('SELECT id FROM kits WHERE id = ? AND user_id = ?').get(kitId, userId);
@@ -188,6 +326,11 @@ async function attachImageFromUrl(kitId, userId, imageUrl, options = {}) {
   }
   if (fallbackUrl && !isSafeUrl(fallbackUrl)) {
     fallbackUrl = '';
+  }
+
+  const allowed = await isAllowedByRobots(imageUrl);
+  if (!allowed) {
+    throw new Error('Image download disallowed by source domain robots.txt policy (§ 44b UrhG opt-out).');
   }
 
   let res = null;
@@ -242,8 +385,8 @@ async function attachImageFromUrl(kitId, userId, imageUrl, options = {}) {
   const inserted = db
     .prepare(
       `INSERT INTO kit_photos (
-        kit_id, user_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        kit_id, user_id, filename, original_name, mime_type, file_size, stance_name, caption, is_cover, is_web_import, source_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`
     )
     .run(
       kitId,
@@ -254,7 +397,8 @@ async function attachImageFromUrl(kitId, userId, imageUrl, options = {}) {
       buffer.length,
       stanceName,
       caption,
-      isCover ? 1 : 0
+      isCover ? 1 : 0,
+      sourceUrl || imageUrl
     );
 
   db.prepare("UPDATE kits SET updated_at = datetime('now') WHERE id = ?").run(kitId);
@@ -262,13 +406,15 @@ async function attachImageFromUrl(kitId, userId, imageUrl, options = {}) {
   return {
     id: Number(inserted.lastInsertRowid),
     filename: uniqueName,
-    url: `/api/files/photos/${uniqueName}`
+    url: `/api/files/photos/${uniqueName}`,
+    isWebImport: true,
+    sourceUrl: sourceUrl || imageUrl
   };
 }
 
 /**
- * Automatically crawls and attaches a cover image for a newly created kit.
- * Non-blocking: failures won't break kit creation.
+ * Opt-in cover crawl helper.
+ * Only invoked when explicitly requested by user.
  */
 async function autoCrawlCoverImage(kitId, userId, query) {
   try {
@@ -280,9 +426,10 @@ async function autoCrawlCoverImage(kitId, userId, query) {
         if (!targetUrl) continue;
         return await attachImageFromUrl(kitId, userId, targetUrl, {
           fallbackUrl: candidate.thumbnail || '',
-          stanceName: 'Box Art / Web Cover',
-          caption: `Auto-crawled: ${candidate.title || query}`,
-          isCover: true
+          stanceName: candidate.license ? `Cover [${candidate.license}]` : 'Cover / Box Art',
+          caption: `Web import: ${candidate.title || query}${candidate.license ? ` (${candidate.license})` : ''}`,
+          isCover: true,
+          sourceUrl: candidate.source || targetUrl
         });
       } catch (_) {
         // try next candidate
@@ -290,14 +437,18 @@ async function autoCrawlCoverImage(kitId, userId, query) {
     }
     return null;
   } catch (err) {
-    console.error('Auto cover crawl failed for kit', kitId, ':', err.message);
+    console.error('Cover crawl failed for kit', kitId, ':', err.message);
     return null;
   }
 }
 
 module.exports = {
   isSafeUrl,
+  isAllowedByRobots,
   USER_AGENT,
+  searchWikimediaCommons,
+  searchDuckDuckGoImages,
+  searchBingImages,
   searchWebImages,
   attachImageFromUrl,
   autoCrawlCoverImage

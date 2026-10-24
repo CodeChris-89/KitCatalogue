@@ -1,5 +1,8 @@
 FROM node:22-alpine
 
+LABEL org.opencontainers.image.source="https://github.com/CodeChris-89/KitCatalogue"
+LABEL org.opencontainers.image.description="KitCatalogue container image"
+
 # su-exec and tzdata for customizable user permissions (PUID/PGID) and timezone support
 RUN apk add --no-cache su-exec tzdata
 

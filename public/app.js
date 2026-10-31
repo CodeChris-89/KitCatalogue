@@ -260,7 +260,7 @@
       locations
         .map(
           (loc) =>
-            `<option value="${escapeHtml(loc)}" ${loc === currentLoc ? 'selected' : ''}>📍 ${escapeHtml(loc)}</option>`
+            `<option value="${escapeHtml(loc)}" ${loc === currentLoc ? 'selected' : ''}>${escapeHtml(loc)}</option>`
         )
         .join('');
 
@@ -277,7 +277,7 @@
       .map(
         ([cat, count]) => `
         <button type="button" class="nav-item ${state.activeNav === `cat:${cat}` ? 'active' : ''}" data-nav="cat:${escapeHtml(cat)}">
-          <span class="nav-icon">▸</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
           <span>${escapeHtml(cat)}</span>
           <span class="nav-badge">${count}</span>
         </button>
@@ -384,14 +384,17 @@
 
         const locBadges = [];
         if (kit.display_location) {
-          locBadges.push(`<span class="kit-location-tag">📍 ${escapeHtml(kit.display_location)}</span>`);
+          locBadges.push(`<span class="kit-location-tag">LOC: ${escapeHtml(kit.display_location)}</span>`);
         }
         if (kit.storage_box) {
-          locBadges.push(`<span class="kit-location-tag">🗃️ ${escapeHtml(kit.storage_box)}</span>`);
+          locBadges.push(`<span class="kit-location-tag">BOX: ${escapeHtml(kit.storage_box)}</span>`);
         }
         if (kit.collection_type === 'wishlist' && kit.release_date) {
-          locBadges.push(`<span class="kit-location-tag">📅 ${escapeHtml(kit.release_date)}</span>`);
+          locBadges.push(`<span class="kit-location-tag">REL: ${escapeHtml(kit.release_date)}</span>`);
         }
+
+        const cameraIconSvg = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
+        const manualIconSvg = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
 
         return `
         <article class="kit-card" data-kit-id="${kit.id}">
@@ -400,8 +403,14 @@
               kit.cover_url
                 ? `<img src="${escapeHtml(kit.cover_url)}" alt="${escapeHtml(kit.name)}" loading="lazy" />`
                 : `<div class="kit-placeholder">
-                    <span class="kit-placeholder-icon">${kit.collection_type === 'wishlist' ? '★' : '🤖'}</span>
-                    <span>No stance photo yet</span>
+                    <span class="kit-placeholder-icon">
+                      <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6">
+                        <rect x="4" y="4" width="24" height="24" rx="2" stroke-dasharray="2 2"></rect>
+                        <line x1="4" y1="16" x2="28" y2="16"></line>
+                        <line x1="16" y1="4" x2="16" y2="28"></line>
+                      </svg>
+                    </span>
+                    <span>No stance photo</span>
                    </div>`
             }
             <div class="kit-card-overlays">
@@ -413,8 +422,8 @@
               }
             </div>
             <div class="kit-card-counters">
-              <span class="counter-pill" title="Stance Photos">📸 ${kit.photo_count || 0}</span>
-              <span class="counter-pill" title="Building Manuals">📘 ${kit.manual_count || 0}</span>
+              <span class="counter-pill" title="Stance Photos">${cameraIconSvg} ${kit.photo_count || 0}</span>
+              <span class="counter-pill" title="Building Manuals">${manualIconSvg} ${kit.manual_count || 0}</span>
             </div>
           </div>
           <div class="kit-card-body">
@@ -880,7 +889,7 @@
       const data = await api(`/api/kits/lookup?q=${encodeURIComponent(q)}`);
       const results = data.results || [];
       if (!results.length) {
-        statusEl.textContent = `No direct database matches for "${q}". Click "⚡ Smart Fill" to run heuristic / AI extraction.`;
+        statusEl.textContent = `No direct database matches for "${q}". Click "Smart Fill" to run heuristic / AI extraction.`;
         return;
       }
 
@@ -894,20 +903,20 @@
             ${
               r.thumbnailUrl || r.imageUrl
                 ? `<img class="smart-lookup-thumb" src="${escapeHtml(r.thumbnailUrl || r.imageUrl)}" alt="" loading="lazy" />`
-                : `<div class="smart-lookup-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.3rem;">🤖</div>`
+                : `<div class="smart-lookup-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg></div>`
             }
             <div class="smart-lookup-meta">
               <strong>${escapeHtml(r.name)}</strong>
               <div class="smart-lookup-badges">
-                ${r.brand ? `<span>🏭 ${escapeHtml(r.brand)}</span>` : ''}
-                ${r.gradeScale ? `<span>📏 ${escapeHtml(r.gradeScale)}</span>` : ''}
-                ${r.modelNumber ? `<span>🔢 ${escapeHtml(r.modelNumber)}</span>` : ''}
-                ${r.series ? `<span>🎬 ${escapeHtml(r.series)}</span>` : ''}
-                ${r.retailPrice ? `<span>💰 ${escapeHtml(String(r.retailPrice))} ${escapeHtml(r.currency || '')}</span>` : ''}
+                ${r.brand ? `<span>Brand: ${escapeHtml(r.brand)}</span>` : ''}
+                ${r.gradeScale ? `<span>Grade: ${escapeHtml(r.gradeScale)}</span>` : ''}
+                ${r.modelNumber ? `<span>Code: ${escapeHtml(r.modelNumber)}</span>` : ''}
+                ${r.series ? `<span>Series: ${escapeHtml(r.series)}</span>` : ''}
+                ${r.retailPrice ? `<span>Price: ${escapeHtml(String(r.retailPrice))} ${escapeHtml(r.currency || '')}</span>` : ''}
                 <span class="badge badge-outline" style="font-size:0.68rem;">${escapeHtml(r.sourceName || 'Web')}</span>
               </div>
             </div>
-            <button type="button" class="btn btn-primary btn-sm" data-pick-candidate="${idx}">⬇ Autofill</button>
+            <button type="button" class="btn btn-primary btn-sm" data-pick-candidate="${idx}">Autofill</button>
           </div>
         `
         )
@@ -946,7 +955,7 @@
     const extractBtn = $('kit-smart-extract-btn');
     extractBtn.disabled = true;
     const origText = extractBtn.textContent;
-    extractBtn.textContent = '⏳ Extracting...';
+    extractBtn.textContent = 'Extracting...';
 
     const aiActive = Boolean(state.user?.aiSettings?.enabled && state.user?.aiSettings?.hasApiKey);
     statusEl.textContent = aiActive
@@ -1098,7 +1107,7 @@
 
     $('detail-name').textContent = kit.name;
     $('detail-collection-badge').textContent =
-      kit.collection_type === 'wishlist' ? '★ Wishlist' : '📦 Owned';
+      kit.collection_type === 'wishlist' ? 'Wishlist' : 'Owned';
     $('detail-collection-badge').className = `badge ${
       kit.collection_type === 'wishlist' ? 'badge-amber' : 'badge-cyan'
     }`;
@@ -1112,7 +1121,7 @@
     }
 
     if (kit.display_location) {
-      $('detail-location-badge').textContent = `📍 ${kit.display_location}`;
+      $('detail-location-badge').textContent = `Loc: ${kit.display_location}`;
       $('detail-location-badge').classList.remove('hidden');
     } else {
       $('detail-location-badge').classList.add('hidden');
@@ -1131,7 +1140,7 @@
     $('detail-quick-status').disabled = readOnly;
 
     $('detail-toggle-wishlist-btn').textContent =
-      kit.collection_type === 'wishlist' ? '📦 Move to Owned' : '★ Move to Wishlist';
+      kit.collection_type === 'wishlist' ? 'Move to Owned' : 'Move to Wishlist';
 
     $('detail-quick-status').value = kit.status;
     $('detail-photo-count').textContent = (kit.photos || []).length;
@@ -1139,17 +1148,17 @@
 
     const pills = [];
     if (kit.price !== null && kit.price !== undefined) {
-      let priceStr = `💰 ${escapeHtml(kit.currency)} ${Number(kit.price).toFixed(2)}`;
+      let priceStr = `${escapeHtml(kit.currency)} ${Number(kit.price).toFixed(2)}`;
       if (kit.retail_price !== null && kit.retail_price !== undefined) {
         priceStr += ` (MSRP ${Number(kit.retail_price).toFixed(2)})`;
       }
       pills.push(priceStr);
     }
     if (kit.storage_box) {
-      pills.push(`🗃️ Spare Parts: ${escapeHtml(kit.storage_box)}`);
+      pills.push(`Spare Parts: ${escapeHtml(kit.storage_box)}`);
     }
     if (kit.rating) {
-      pills.push(`⭐ ${kit.rating}/5`);
+      pills.push(`Rating: ${kit.rating}/5`);
     }
     if (kit.store_url) {
       pills.push(
@@ -1262,10 +1271,13 @@
       manualsList.innerHTML = manuals
         .map((m) => {
           const isLocal = Boolean(m.filename);
+          const docIconSvg = isLocal
+            ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
+            : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
           return `
           <div class="manual-item">
             <div class="manual-info">
-              <span class="manual-icon">${isLocal ? '📕' : '🔗'}</span>
+              <span class="manual-icon">${docIconSvg}</span>
               <div>
                 <strong>${escapeHtml(m.title)}</strong>
                 <div class="manual-meta">
@@ -1794,7 +1806,7 @@
       const btn = $('user-ai-test-btn');
       const statusEl = $('user-ai-test-result');
       btn.disabled = true;
-      btn.textContent = '⏳ Testing...';
+      btn.textContent = 'Testing...';
       statusEl.textContent = 'Sending test extraction prompt to your AI provider...';
       statusEl.classList.remove('hidden');
 
@@ -1809,13 +1821,13 @@
           }
         });
         statusEl.textContent = `✓ Connection verified (${res.provider} — ${res.model})! Sample parsed: "${res.sample?.name || 'OK'}" (${res.sample?.gradeScale || ''})`;
-        showToast('AI connection verified!', 'success');
+        showToast('AI connection verified', 'success');
       } catch (err) {
         statusEl.textContent = `✗ Connection failed: ${err.message}`;
         showToast(err.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = '🧪 Test AI Connection';
+        btn.textContent = 'Test Connection';
       }
     });
 

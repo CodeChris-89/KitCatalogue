@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark light" />
-  <meta name="description" content="Self-hosted building kit &amp; scale model catalogue (Gundam, Moshow, Book Nooks, Zoids). AI generated, pure vibes." />
+  <meta name="description" content="Self-hosted building kit &amp; scale model catalogue (Gundam, Moshow, Book Nooks, Zoids)." />
   <title>KitCatalogue — Building Kits &amp; Mecha Hangar</title>
-  <link rel="stylesheet" href="/styles.css?v=8" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><path d=%22M50 14 L82 32 L82 68 L50 86 L18 68 L18 32 Z%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2212%22 fill=%22%23f59e0b%22/></svg>" />
+  <link rel="stylesheet" href="/styles.css?v=10" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23141415%22/><path d=%22M50 14 L82 32 L82 68 L50 86 L18 68 L18 32 Z%22 fill=%22none%22 stroke=%22%2338bdf8%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2250%22 r=%2212%22 fill=%22%23ededed%22/></svg>" />
 </head>
 <body>
   <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -15,11 +15,11 @@
   <!-- PUBLIC SHOWCASE READ-ONLY BANNER -->
   <div id="showcase-top-banner" class="showcase-top-banner hidden">
     <div>
-      <strong>🌐 Public Hangar Showcase:</strong> Viewing <span id="showcase-owner-name"></span>'s Building Kit Collection (Read-Only)
+      <strong>Public Hangar Showcase:</strong> Viewing <span id="showcase-owner-name"></span>'s collection (read-only)
     </div>
     <div style="display: flex; gap: 8px; align-items: center;">
-      <button type="button" id="showcase-legal-btn" class="btn btn-ghost btn-sm" style="color: var(--text-muted); font-size: 0.82rem;">§ Legal &amp; Impressum</button>
-      <a href="/" class="btn btn-secondary btn-sm">Sign In to Your Hangar</a>
+      <button type="button" id="showcase-legal-btn" class="btn btn-ghost btn-sm">Legal &amp; Impressum</button>
+      <a href="/" class="btn btn-secondary btn-sm">Sign In</a>
     </div>
   </div>
 
@@ -28,19 +28,19 @@
     <div class="auth-card">
       <div class="brand-header">
         <div class="brand-logo">
-          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.2">
+          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="18,2 33,10.5 33,25.5 18,34 3,25.5 3,10.5" stroke="#38bdf8" />
-            <polygon points="18,9 26,13.5 26,22.5 18,27 10,22.5 10,13.5" fill="rgba(56,189,248,0.18)" stroke="#f59e0b" />
+            <polygon points="18,9 26,13.5 26,22.5 18,27 10,22.5 10,13.5" fill="rgba(56,189,248,0.12)" stroke="#ededed" />
           </svg>
         </div>
         <div>
           <h1>KitCatalogue</h1>
-          <p class="subtitle">Gundam, Moshow, Book Nooks &amp; Scale Model Hangar</p>
+          <p class="subtitle">Scale model and building kit hangar</p>
         </div>
       </div>
 
       <div id="first-admin-banner" class="alert-banner admin-setup-banner hidden">
-        <strong>Initial Server Setup:</strong> No users exist yet. Create your account below — <strong>the first registered user automatically becomes the Server Administrator</strong>.
+        <strong>Initial setup:</strong> No accounts exist yet. Create your account below to become the server administrator.
       </div>
 
       <div id="auth-tabs" class="auth-tabs">
@@ -65,32 +65,30 @@
         <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">Sign In</button>
       </form>
 
-      <!-- FEATURE HIGHLIGHTS & AI PURE VIBES DISCLAIMER -->
+      <!-- FEATURE HIGHLIGHTS -->
       <div class="auth-features-summary">
-        <h4>⚡ Key Hangar Features</h4>
+        <h4>Key Hangar Capabilities</h4>
         <ul class="auth-features-list">
-          <li>📦 <strong>Owned &amp; Wishlist Hangar:</strong> Track backlog builds, grail kits &amp; wishlist transfers</li>
-          <li>🛠️ <strong>7-Stage Build Pipeline:</strong> Backlog, In Progress, Panel Lining, Painting to Finished</li>
-          <li>✨ <strong>Smart Kit Autofill:</strong> Instant metadata lookup via Gundam Wiki, web store scraper &amp; AI</li>
-          <li>📸 <strong>Stance &amp; Action Galleries:</strong> Fullscreen lightbox with box art selector &amp; custom pose tags</li>
-          <li>📖 <strong>In-App PDF Manuals:</strong> Built-in previewer &amp; quick reference to Dalong, Scalemates &amp; Mech9</li>
-          <li>📍 <strong>Shelves &amp; Parts Indexing:</strong> Display locations &amp; spare runners/parts box index</li>
-          <li>📊 <strong>Analytics &amp; Cost Tracker:</strong> Brand spend, grade distribution &amp; wishlist MSRP deals</li>
-          <li>💾 <strong>Full Portability &amp; Showcase:</strong> Standalone JSON backup with base64 photos &amp; read-only link</li>
+          <li><strong>Collection tracking:</strong> Manage owned kits, backlog queue, and wishlist priorities</li>
+          <li><strong>7-stage pipeline:</strong> Backlog, In Progress, Panel Lining, Painting, to Finished</li>
+          <li><strong>Smart kit autofill:</strong> Instant metadata lookup via model databases, store scraper, and AI</li>
+          <li><strong>Stance galleries:</strong> Lightbox with pose tags, angle notes, and box art selector</li>
+          <li><strong>Assembly manuals:</strong> Integrated PDF viewer with Dalong, Scalemates, and Mech9 references</li>
+          <li><strong>Storage coordinates:</strong> Display location shelf assignments and spare parts box indexing</li>
+          <li><strong>Cost tracking:</strong> Brand spend, grade distribution, and street price vs MSRP comparisons</li>
+          <li><strong>Data portability:</strong> Full JSON archive with embedded photos and manuals</li>
         </ul>
       </div>
 
       <div class="ai-vibes-disclaimer">
-        <div class="ai-vibes-badge">🤖 AI GENERATED • NOT AUDITED BY EXPERTS • PURE VIBES</div>
+        <div class="ai-vibes-badge">Development note</div>
         <p>
-          KitCatalogue was built and architected using Generative AI (Antigravity with Google Gemini &amp; Claude models).
-          The code has <strong>not been reviewed or audited by human software engineering or security experts</strong>.
-          Pure vibes. Run self-hosted at your own discretion.
+          KitCatalogue was developed with generative AI assistance for personal scale modeling tracking. Unaudited hobby software.
         </p>
-        <div style="margin-top: 10px; font-size: 0.78rem; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
-          <strong>⚖️ Legal &amp; Trademark Notice (§ 23 MarkenG):</strong>
-          Gundam, Gunpla, Bandai Spirits, Moshow Toys, Zoids, Kotobukiya, and related trademarks are the property of their respective owners. KitCatalogue is an independent enthusiast project and is not affiliated with or endorsed by any kit manufacturer.
-          <br /><a href="#" id="auth-legal-link" style="color: var(--primary); text-decoration: underline; margin-top: 4px; display: inline-block;">View Legal Notice &amp; Impressum (§ 5 DDG)</a>
+        <div style="margin-top: 8px; font-size: 0.74rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 8px;">
+          <strong>Trademark notice (§ 23 MarkenG):</strong>
+          Gundam, Gunpla, Bandai Spirits, Moshow Toys, Zoids, Kotobukiya, and related marks belong to their respective owners. KitCatalogue is an independent enthusiast project.
+          <br /><a href="#" id="auth-legal-link" style="color: var(--text-secondary); text-decoration: underline; margin-top: 3px; display: inline-block;">Legal Notice &amp; Impressum (§ 5 DDG)</a>
         </div>
       </div>
     </div>
@@ -102,9 +100,9 @@
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div class="brand-logo-sm">
-          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4">
+          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="18,2 33,10.5 33,25.5 18,34 3,25.5 3,10.5" stroke="#38bdf8" />
-            <circle cx="18" cy="18" r="6" fill="#f59e0b" stroke="none" />
+            <circle cx="18" cy="18" r="5" fill="#ededed" stroke="none" />
           </svg>
         </div>
         <div>
@@ -114,24 +112,24 @@
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-section-label">CATALOGUE</div>
+        <div class="nav-section-label">Catalogue</div>
         <button type="button" class="nav-item active" data-nav="all">
-          <span class="nav-icon">❖</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>
           <span>All Kits</span>
           <span id="nav-count-all" class="nav-badge">0</span>
         </button>
         <button type="button" class="nav-item" data-nav="owned">
-          <span class="nav-icon">📦</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></span>
           <span>Owned Collection</span>
           <span id="nav-count-owned" class="nav-badge">0</span>
         </button>
         <button type="button" class="nav-item" data-nav="wishlist">
-          <span class="nav-icon">★</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>
           <span>Wishlist</span>
           <span id="nav-count-wishlist" class="nav-badge badge-amber">0</span>
         </button>
 
-        <div class="nav-section-label">BUILD PIPELINE</div>
+        <div class="nav-section-label">Build pipeline</div>
         <button type="button" class="nav-item" data-nav="status:backlog">
           <span class="status-dot dot-backlog"></span>
           <span>Backlog</span>
@@ -139,38 +137,38 @@
         </button>
         <button type="button" class="nav-item" data-nav="status:building">
           <span class="status-dot dot-building"></span>
-          <span>In Progress / Building</span>
+          <span>In Progress</span>
           <span id="nav-count-building" class="nav-badge">0</span>
         </button>
         <button type="button" class="nav-item" data-nav="status:finished">
           <span class="status-dot dot-finished"></span>
-          <span>Finished Builds</span>
+          <span>Finished</span>
           <span id="nav-count-finished" class="nav-badge">0</span>
         </button>
 
-        <div class="nav-section-label">INSIGHTS &amp; DATA</div>
+        <div class="nav-section-label">Insights &amp; data</div>
         <button type="button" class="nav-item" data-nav="analytics">
-          <span class="nav-icon">📊</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></span>
           <span>Analytics &amp; Costs</span>
         </button>
         <button type="button" id="nav-data-portability" class="nav-item" data-nav="portability">
-          <span class="nav-icon">💾</span>
-          <span>Backup, Import &amp; Share</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+          <span>Backup &amp; Export</span>
         </button>
 
-        <div class="nav-section-label">CATEGORIES</div>
+        <div class="nav-section-label">Categories</div>
         <div id="sidebar-categories" class="sidebar-categories"></div>
 
-        <div class="nav-section-label">ACCOUNT</div>
+        <div class="nav-section-label">Account</div>
         <button type="button" id="nav-settings" class="nav-item" data-nav="settings">
-          <span class="nav-icon">⚙️</span>
+          <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>
           <span>Settings</span>
         </button>
 
         <div id="admin-nav-section" class="hidden">
-          <div class="nav-section-label">ADMINISTRATION</div>
+          <div class="nav-section-label">Administration</div>
           <button type="button" class="nav-item" data-nav="admin">
-            <span class="nav-icon">🛡️</span>
+            <span class="nav-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></span>
             <span>Admin Settings</span>
             <span class="nav-badge badge-cyan">Admin</span>
           </button>
@@ -203,10 +201,10 @@
 
         <div id="topbar-owner-actions" class="topbar-actions">
           <button type="button" id="add-wishlist-btn" class="btn btn-secondary">
-            <span>★ + Wishlist Kit</span>
+            <span>+ Wishlist Kit</span>
           </button>
           <button type="button" id="add-kit-btn" class="btn btn-primary">
-            <span>+ Add Owned Kit</span>
+            <span>+ Add Kit</span>
           </button>
         </div>
       </header>
@@ -216,28 +214,28 @@
         <!-- Stats Bar -->
         <div class="stats-grid">
           <div class="stat-card">
-            <span class="stat-label">Owned Kits</span>
+            <span class="stat-label">Owned kits</span>
             <strong id="stat-owned" class="stat-value">0</strong>
-            <span id="stat-owned-val" class="stat-sub">$0.00 total value</span>
+            <span id="stat-owned-val" class="stat-sub">$0.00 total</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Backlog Queue</span>
-            <strong id="stat-backlog" class="stat-value text-slate">0</strong>
-            <span class="stat-sub">Unbuilt boxes</span>
+            <span class="stat-label">Backlog queue</span>
+            <strong id="stat-backlog" class="stat-value">0</strong>
+            <span class="stat-sub">Unbuilt kits</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Active Workbench</span>
-            <strong id="stat-building" class="stat-value text-sky">0</strong>
-            <span class="stat-sub">Building / Painting</span>
+            <span class="stat-label">Workbench</span>
+            <strong id="stat-building" class="stat-value">0</strong>
+            <span class="stat-sub">Building &amp; painting</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Completed Builds</span>
-            <strong id="stat-finished" class="stat-value text-emerald">0</strong>
+            <span class="stat-label">Completed builds</span>
+            <strong id="stat-finished" class="stat-value">0</strong>
             <span id="stat-completion-rate" class="stat-sub">0% completion rate</span>
           </div>
           <div class="stat-card">
             <span class="stat-label">Wishlist</span>
-            <strong id="stat-wishlist" class="stat-value text-amber">0</strong>
+            <strong id="stat-wishlist" class="stat-value">0</strong>
             <span id="stat-media-count" class="stat-sub">0 stances · 0 manuals</span>
           </div>
         </div>
@@ -245,7 +243,7 @@
         <!-- Filters & Search Toolbar -->
         <div class="filter-bar">
           <div class="search-box">
-            <input type="search" id="search-input" placeholder="Search kits by name, series, brand, grade/scale, display shelf, spare box #..." />
+            <input type="search" id="search-input" placeholder="Search kits, series, grades, or locations..." />
           </div>
           <div class="filter-controls">
             <select id="filter-category">
@@ -292,47 +290,57 @@
 
         <!-- Empty State -->
         <div id="empty-state" class="empty-state hidden">
-          <div class="empty-icon">🤖</div>
-          <h3>Your Hangar is Empty</h3>
-          <p>Start cataloguing your Gundam, Moshow, Book Nooks, and other building kits, or add upcoming releases to your wishlist.</p>
+          <div class="empty-icon">
+            <svg viewBox="0 0 64 64" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="8" width="48" height="48" rx="2" stroke-dasharray="3 3"></rect>
+              <line x1="8" y1="32" x2="56" y2="32"></line>
+              <line x1="32" y1="8" x2="32" y2="56"></line>
+              <rect x="14" y="14" width="12" height="12" rx="1"></rect>
+              <rect x="38" y="14" width="12" height="12" rx="1"></rect>
+              <rect x="14" y="38" width="12" height="12" rx="1"></rect>
+              <rect x="38" y="38" width="12" height="12" rx="1"></rect>
+            </svg>
+          </div>
+          <h3>Your hangar is empty</h3>
+          <p>Start cataloguing your building kits, track your build stages, or add upcoming releases to your wishlist.</p>
           <div id="empty-owner-actions" class="empty-actions">
-            <button type="button" id="empty-add-owned" class="btn btn-primary">+ Add Owned Kit</button>
-            <button type="button" id="empty-add-wishlist" class="btn btn-secondary">★ Add to Wishlist</button>
+            <button type="button" id="empty-add-owned" class="btn btn-primary">+ Add Kit</button>
+            <button type="button" id="empty-add-wishlist" class="btn btn-secondary">+ Add to Wishlist</button>
           </div>
         </div>
       </section>
 
-      <!-- IDEA 4: BACKLOG ANALYTICS & COST TRACKING VIEW -->
+      <!-- ANALYTICS & COST TRACKING VIEW -->
       <section id="analytics-view" class="content-section hidden">
         <div class="stats-grid" id="analytics-summary-cards"></div>
         <div class="analytics-grid">
           <div class="admin-card">
-            <h3>Build Pipeline &amp; Backlog Breakdown</h3>
+            <h3>Build Pipeline Breakdown</h3>
             <p class="view-subtitle" style="margin-bottom: 14px;">Distribution of owned kits across build stages</p>
             <div id="chart-pipeline" class="bar-chart"></div>
           </div>
 
           <div class="admin-card">
-            <h3>Spend &amp; Count by Brand / Manufacturer</h3>
-            <p class="view-subtitle" style="margin-bottom: 14px;">Where your hangar budget goes</p>
+            <h3>Spend &amp; Count by Manufacturer</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Hangar spend by brand</p>
             <div id="chart-brands" class="bar-chart"></div>
           </div>
 
           <div class="admin-card">
             <h3>Grade &amp; Scale Breakdown</h3>
-            <p class="view-subtitle" style="margin-bottom: 14px;">HG, RG, MG, PG, 1/72 &amp; Dioramas</p>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Kit scales across collection</p>
             <div id="chart-grades" class="bar-chart"></div>
           </div>
 
           <div class="admin-card">
-            <h3>Display Locations &amp; Spare Box Index</h3>
-            <p class="view-subtitle" style="margin-bottom: 14px;">Where your kits and runner boxes live</p>
+            <h3>Display Locations &amp; Spare Boxes</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Cabinets, shelves, and runner bin index</p>
             <div id="chart-locations" class="bar-chart"></div>
           </div>
 
           <div class="admin-card" style="grid-column: 1 / -1;">
-            <h3 id="wishlist-table-heading">Wishlist Price Tracker (Target Price vs. MSRP / Retail)</h3>
-            <p class="view-subtitle" style="margin-bottom: 14px;">Track pre-order release dates and compare street prices against MSRP</p>
+            <h3 id="wishlist-table-heading">Wishlist Price Tracker</h3>
+            <p class="view-subtitle" style="margin-bottom: 14px;">Pre-order dates and target prices vs. MSRP</p>
             <div class="table-responsive" tabindex="0" role="region" aria-labelledby="wishlist-table-heading">
               <table class="admin-table">
                 <thead>
@@ -340,10 +348,10 @@
                     <th>Wishlist Kit</th>
                     <th>Brand / Grade</th>
                     <th>Priority</th>
-                    <th>Release / Restock Date</th>
-                    <th>Current / Street Price</th>
-                    <th>Retail / MSRP</th>
-                    <th>Deal / Markup</th>
+                    <th>Release Date</th>
+                    <th>Street Price</th>
+                    <th>MSRP</th>
+                    <th>Deal / Delta</th>
                   </tr>
                 </thead>
                 <tbody id="analytics-wishlist-tbody"></tbody>
@@ -353,15 +361,15 @@
         </div>
       </section>
 
-      <!-- IDEA 6: DATA PORTABILITY, BACKUP & PUBLIC SHOWCASE VIEW -->
+      <!-- DATA PORTABILITY & BACKUP VIEW -->
       <section id="portability-view" class="content-section hidden">
         <div class="admin-grid">
           <!-- Public Showcase Mode -->
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>🌐 Public "Hangar Showcase" Link (Read-Only)</h3>
-                <p>Share a read-only gallery of your collection, stances, and build statuses with friends without requiring them to log in.</p>
+                <h3>Public Hangar Showcase (Read-Only)</h3>
+                <p>Share a read-only gallery of your collection, stances, and build statuses without requiring visitor authentication.</p>
               </div>
               <label class="switch-label">
                 <input type="checkbox" id="showcase-enable-toggle" switch />
@@ -379,14 +387,14 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>📦 One-Click Full Backup &amp; Restore</h3>
-                <p>Export your entire catalogue—including embedded stance photos and uploaded PDF manuals—into a single portable backup file, or restore onto any server or local instance.</p>
+                <h3>Full Backup &amp; Export</h3>
+                <p>Export your catalogue including embedded stance photos and PDF manuals into a portable backup file.</p>
               </div>
             </div>
             <div class="portability-actions-row">
-              <button type="button" id="export-full-backup-btn" class="btn btn-primary">⬇ Download Full Backup (.json with Photos &amp; Manuals)</button>
-              <button type="button" id="export-metadata-json-btn" class="btn btn-secondary">⬇ Export Metadata Only (.json)</button>
-              <button type="button" id="export-csv-btn" class="btn btn-secondary">📊 Export Spreadsheet (.csv)</button>
+              <button type="button" id="export-full-backup-btn" class="btn btn-primary">Download Full Backup (.json)</button>
+              <button type="button" id="export-metadata-json-btn" class="btn btn-secondary">Export Metadata Only (.json)</button>
+              <button type="button" id="export-csv-btn" class="btn btn-secondary">Export Spreadsheet (.csv)</button>
             </div>
           </div>
 
@@ -394,16 +402,16 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>📥 Restore Backup or Bulk Import (JSON / CSV)</h3>
-                <p>Import a KitCatalogue `.json` backup archive or bulk-import kits from a `.csv` spreadsheet (`name,category,brand,grade_scale,series,model_number,collection_type,status,price,retail_price,currency,display_location,storage_box,notes`).</p>
+                <h3>Restore Backup or Bulk Import</h3>
+                <p>Import a KitCatalogue `.json` backup archive or bulk-import kits from a `.csv` spreadsheet.</p>
               </div>
             </div>
             <form id="import-data-form" class="upload-bar-inputs">
               <div class="form-group">
-                <label for="import-file-input">Select `.json` Backup or `.csv` Spreadsheet</label>
+                <label for="import-file-input">Select Backup or CSV File</label>
                 <input type="file" id="import-file-input" accept=".json,.csv" required />
               </div>
-              <button type="submit" id="import-submit-btn" class="btn btn-primary">⬆ Import Into Catalogue</button>
+              <button type="submit" id="import-submit-btn" class="btn btn-primary">Import Into Catalogue</button>
             </form>
           </div>
         </div>
@@ -431,8 +439,8 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>⚖️ Legal Notice &amp; Impressum Configuration (§ 5 DDG / DSGVO)</h3>
-                <p>If you make your KitCatalogue instance publicly accessible, configure your provider identification (Impressum) and privacy statement for compliance.</p>
+                <h3>Legal Notice &amp; Impressum (§ 5 DDG)</h3>
+                <p>Configure provider identification and privacy statement for compliance if making KitCatalogue publicly accessible.</p>
               </div>
             </div>
             <form id="admin-legal-form" class="upload-bar-inputs" style="flex-direction: column; gap: 10px; margin-top: 8px;">
@@ -442,7 +450,7 @@
               </div>
               <div class="form-group" style="width: 100%;">
                 <label for="admin-privacy-input">Privacy Notice Excerpt (Art. 13 DSGVO)</label>
-                <textarea id="admin-privacy-input" rows="2" placeholder="Information regarding IP logging in server requests..."></textarea>
+                <textarea id="admin-privacy-input" rows="2" placeholder="Information regarding technical connection data processing..."></textarea>
               </div>
               <button type="submit" id="admin-legal-save-btn" class="btn btn-primary" style="align-self: flex-start;">Save Legal Notice</button>
             </form>
@@ -451,8 +459,8 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>Server Registration Policy</h3>
-                <p>Control whether new users on your network can self-register accounts.</p>
+                <h3>Registration Policy</h3>
+                <p>Control whether new users can self-register accounts.</p>
               </div>
               <label class="switch-label">
                 <input type="checkbox" id="admin-allow-reg-toggle" switch />
@@ -465,7 +473,7 @@
             <div class="admin-card-header">
               <div>
                 <h3>Create User Account</h3>
-                <p>Directly provision a user or co-administrator account.</p>
+                <p>Provision a new user or administrator account.</p>
               </div>
             </div>
             <form id="admin-create-user-form" class="admin-inline-form">
@@ -476,7 +484,7 @@
                 <option value="user">Standard User</option>
                 <option value="admin">Administrator</option>
               </select>
-              <button type="submit" class="btn btn-primary">+ Create User</button>
+              <button type="submit" class="btn btn-primary">Create User</button>
             </form>
           </div>
 
@@ -484,7 +492,7 @@
             <div class="admin-card-header">
               <div>
                 <h3 id="users-table-heading">Registered Users</h3>
-                <p>First user is Admin by default. Manage roles, reset passwords, or disable accounts.</p>
+                <p>Manage user roles, password resets, and account status.</p>
               </div>
             </div>
             <div class="table-responsive" tabindex="0" role="region" aria-labelledby="users-table-heading">
@@ -509,15 +517,15 @@
         </div>
       </section>
 
-      <!-- DEDICATED USER SETTINGS VIEW (PERSONAL AI PROVIDER + ACCOUNT SETTINGS) -->
+      <!-- USER SETTINGS VIEW -->
       <section id="settings-view" class="content-section hidden">
         <div class="admin-grid">
           <!-- Card 1: Personal AI Extraction Assistant -->
           <form id="user-ai-settings-form" class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>✨ Personal AI Extraction Assistant</h3>
-                <p>Your API Key is encrypted at rest with AES-256-GCM and strictly isolated to your account (<strong id="user-ai-account-handle">@user</strong>). No other user or administrator can view or use your key.</p>
+                <h3>Personal AI Extraction Assistant</h3>
+                <p>Your API key is encrypted at rest with AES-256-GCM and isolated to your account (<strong id="user-ai-account-handle">@user</strong>).</p>
               </div>
               <label class="switch-label">
                 <input type="checkbox" id="user-ai-enabled" switch checked />
@@ -538,19 +546,19 @@
               </div>
               <div class="form-group">
                 <label for="user-ai-model">Model Name</label>
-                <input type="text" id="user-ai-model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini, claude-3-5-haiku-latest" />
+                <input type="text" id="user-ai-model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini" />
               </div>
             </div>
 
             <div class="form-group">
-              <label for="user-ai-base-url">Provider Endpoint / Base URL (Optional override or required for Custom)</label>
+              <label for="user-ai-base-url">Provider Endpoint / Base URL (Optional)</label>
               <input type="url" id="user-ai-base-url" placeholder="https://generativelanguage.googleapis.com/v1beta" />
             </div>
 
             <div class="form-group">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label for="user-ai-api-key">Personal API Key</label>
-                <span id="user-ai-key-badge" class="badge badge-outline">No API key stored</span>
+                <span id="user-ai-key-badge" class="badge badge-outline">No key stored</span>
               </div>
               <input
                 type="password"
@@ -564,10 +572,10 @@
 
             <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="submit" id="user-ai-save-btn" class="btn btn-primary">💾 Save AI Config</button>
-                <button type="button" id="user-ai-test-btn" class="btn btn-secondary">🧪 Test AI Connection</button>
+                <button type="submit" id="user-ai-save-btn" class="btn btn-primary">Save AI Config</button>
+                <button type="button" id="user-ai-test-btn" class="btn btn-secondary">Test Connection</button>
               </div>
-              <button type="button" id="user-ai-clear-btn" class="btn btn-ghost btn-sm" style="color: var(--danger);">🗑 Clear Stored API Key</button>
+              <button type="button" id="user-ai-clear-btn" class="btn btn-ghost btn-sm" style="color: var(--accent-danger);">Clear Stored API Key</button>
             </div>
           </form>
 
@@ -575,8 +583,8 @@
           <form id="user-profile-form" class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>👤 User Account &amp; Password</h3>
-                <p>Update your display name or change your account password.</p>
+                <h3>User Account &amp; Password</h3>
+                <p>Update display name or change account password.</p>
               </div>
             </div>
             <div class="form-row-2">
@@ -592,33 +600,31 @@
             <button type="submit" class="btn btn-primary">Save Profile Changes</button>
           </form>
 
-          <!-- Card 3: About KitCatalogue & AI Pure Vibes Disclaimer -->
+          <!-- Card 3: About KitCatalogue -->
           <div class="admin-card">
             <div class="admin-card-header">
               <div>
-                <h3>ℹ️ About KitCatalogue &amp; AI Codebase Disclosure</h3>
-                <p>Complete feature architecture &amp; Generative AI development transparency.</p>
+                <h3>About KitCatalogue</h3>
+                <p>Architecture &amp; feature overview.</p>
               </div>
             </div>
             <div class="auth-features-summary" style="margin-top: 0; border: none; padding: 0;">
               <ul class="auth-features-list">
-                <li>📦 <strong>Catalogue Management:</strong> Owned collection vs. wishlist with instant status and priority updates</li>
-                <li>🛠️ <strong>Build Workflow:</strong> 7 statuses (Backlog, Building, Panel Lining &amp; Decals, Painting &amp; Topcoat, Finished, On Hold, Wishlist)</li>
-                <li>✨ <strong>Smart Kit Autofill:</strong> Multi-source extraction from Gundam Wiki, web search, JSON-LD store scraper, and personal encrypted AI assistant</li>
-                <li>📸 <strong>Action Stances Gallery:</strong> Custom stance naming, multiple photos per kit, and cover selection</li>
-                <li>📖 <strong>Building Manuals:</strong> PDF file uploads with embedded previewer and external bookmark links</li>
-                <li>📍 <strong>Physical Organization:</strong> Display location shelf assignment and spare runner box indexing</li>
-                <li>📊 <strong>Hangar Analytics:</strong> Cost and retail MSRP comparison, completion metrics, and category charts</li>
-                <li>💾 <strong>Portability &amp; Showcase:</strong> One-click JSON backup with embedded media, CSV import/export, and tokenized read-only gallery</li>
-                <li>🔒 <strong>Personal AI Isolation:</strong> Per-user AES-256-GCM encryption supporting Google Gemini, OpenAI, Anthropic Claude, OpenRouter, and custom endpoints</li>
+                <li><strong>Catalogue management:</strong> Owned collection vs. wishlist with status and priority updates</li>
+                <li><strong>Build workflow:</strong> 7 statuses (Backlog, Building, Panel Lining, Painting, Finished, On Hold, Wishlist)</li>
+                <li><strong>Smart kit autofill:</strong> Multi-source extraction from Gundam Wiki, web search, JSON-LD store scraper, and AI assistant</li>
+                <li><strong>Action stances gallery:</strong> Custom stance naming, multiple photos per kit, and cover selection</li>
+                <li><strong>Building manuals:</strong> PDF file uploads with embedded previewer and external bookmark links</li>
+                <li><strong>Physical organization:</strong> Display location shelf assignment and spare runner box indexing</li>
+                <li><strong>Hangar analytics:</strong> Cost and retail MSRP comparison, completion metrics, and category charts</li>
+                <li><strong>Portability &amp; showcase:</strong> One-click JSON backup with embedded media, CSV import/export, and read-only gallery</li>
+                <li><strong>Personal AI isolation:</strong> Per-user AES-256-GCM encryption supporting Gemini, OpenAI, Claude, OpenRouter, and custom endpoints</li>
               </ul>
             </div>
             <div class="ai-vibes-disclaimer" style="margin-top: 14px;">
-              <div class="ai-vibes-badge">🤖 AI GENERATED • NOT AUDITED BY EXPERTS • PURE VIBES</div>
+              <div class="ai-vibes-badge">Development note</div>
               <p>
-                KitCatalogue was extensively built and architected using Generative AI (Google Gemini &amp; Claude models via Antigravity).
-                The codebase has <strong>not been reviewed or audited by human software engineering or cybersecurity experts</strong>.
-                Built for fun, scale modeling enthusiasm, and hobby tracking — pure vibes.
+                KitCatalogue was developed with assistance from generative AI for personal hobby tracking. Self-hosted enthusiast software.
               </p>
             </div>
           </div>
@@ -643,29 +649,29 @@
         <div class="smart-lookup-box">
           <div class="smart-lookup-header">
             <div>
-              <strong>✨ Smart Kit Lookup &amp; Autofill</strong>
-              <span class="smart-lookup-sub">Search Gundam Wiki &amp; Web Databases, paste a product URL (HLJ, Scalemates, Bandai, Rolife), or use your personal AI key</span>
+              <strong>Smart Kit Lookup &amp; Autofill</strong>
+              <span class="smart-lookup-sub">Search model databases, paste a product URL, or extract using your AI assistant</span>
             </div>
-            <button type="button" id="kit-open-ai-config-btn" class="btn btn-ghost btn-sm" title="Configure your personal encrypted AI API Key">
-              🔑 <span id="kit-ai-status-label">Configure AI Key</span>
+            <button type="button" id="kit-open-ai-config-btn" class="btn btn-ghost btn-sm" title="Configure your personal encrypted AI key">
+              <span id="kit-ai-status-label">Configure AI Key</span>
             </button>
           </div>
           <div class="smart-lookup-controls">
             <input
               type="text"
               id="kit-smart-lookup-input"
-              placeholder="Type kit name, model # (e.g. MGEX Strike Freedom, MCT-J02, TGB01), barcode, or paste URL..."
+              placeholder="Kit name, model code (e.g. MGEX Strike Freedom, MCT-J02), or product URL..."
             />
-            <button type="button" id="kit-smart-search-btn" class="btn btn-secondary">🔍 Search Kits</button>
-            <button type="button" id="kit-smart-extract-btn" class="btn btn-primary" title="Extract directly from URL or autofill using Smart Parser + Personal AI">⚡ Smart Fill</button>
+            <button type="button" id="kit-smart-search-btn" class="btn btn-secondary">Search</button>
+            <button type="button" id="kit-smart-extract-btn" class="btn btn-primary" title="Extract directly from URL or autofill using parser">Smart Fill</button>
           </div>
           <div id="kit-lookup-status" class="smart-lookup-status hidden" aria-live="polite"></div>
           <div id="kit-lookup-results" class="smart-lookup-results hidden"></div>
           <div id="kit-autofill-cover-preview" class="smart-cover-preview hidden">
             <img id="kit-autofill-cover-img" src="" alt="Selected box art" />
             <div style="flex: 1;">
-              <strong>Queued Cover Image from Lookup</strong>
-              <div class="view-subtitle">Will be automatically attached as cover photo when you save this kit.</div>
+              <strong>Queued Cover Image</strong>
+              <div class="view-subtitle">Will be attached as cover photo when you save this kit.</div>
             </div>
             <button type="button" id="kit-autofill-cover-clear" class="btn btn-ghost btn-sm">Remove</button>
           </div>
@@ -675,8 +681,8 @@
           <div class="form-group">
             <label for="kit-collection-type">Catalogue Section *</label>
             <select id="kit-collection-type" required>
-              <option value="owned">📦 Owned Collection</option>
-              <option value="wishlist">★ Wishlist</option>
+              <option value="owned">Owned Collection</option>
+              <option value="wishlist">Wishlist</option>
             </select>
           </div>
           <div class="form-group">
@@ -695,7 +701,7 @@
 
         <div class="form-group">
           <label for="kit-name">Kit Name *</label>
-          <input type="text" id="kit-name" required placeholder="e.g. MGEX 1/100 Strike Freedom Gundam, Moshow Takeda Shingen, Sakura Densya Book Nook" />
+          <input type="text" id="kit-name" required placeholder="e.g. MGEX 1/100 Strike Freedom Gundam, Moshow Takeda Shingen" />
         </div>
 
         <div class="form-row-3">
@@ -715,7 +721,7 @@
           </div>
           <div class="form-group">
             <label for="kit-brand">Brand / Manufacturer</label>
-            <input type="text" id="kit-brand" list="brand-suggestions" placeholder="e.g. Bandai, Moshow, Rolife, Kotobukiya" />
+            <input type="text" id="kit-brand" list="brand-suggestions" placeholder="e.g. Bandai Spirits, Moshow, Rolife" />
             <datalist id="brand-suggestions">
               <option value="Bandai Spirits"></option>
               <option value="Moshow Toys"></option>
@@ -736,7 +742,7 @@
           </div>
           <div class="form-group">
             <label for="kit-grade-scale">Grade / Scale</label>
-            <input type="text" id="kit-grade-scale" list="grade-suggestions" placeholder="e.g. MG 1/100, RG 1/144, PG, Noble Class" />
+            <input type="text" id="kit-grade-scale" list="grade-suggestions" placeholder="e.g. MG 1/100, RG 1/144, 1/72" />
             <datalist id="grade-suggestions">
               <option value="HG 1/144"></option>
               <option value="RG 1/144"></option>
@@ -761,7 +767,7 @@
         <div class="form-row-3">
           <div class="form-group">
             <label for="kit-series">Series / Line</label>
-            <input type="text" id="kit-series" list="series-suggestions" placeholder="e.g. Universal Century, Progenitor Effect, Cyber City" />
+            <input type="text" id="kit-series" list="series-suggestions" placeholder="e.g. Universal Century, Progenitor Effect" />
             <datalist id="series-suggestions">
               <option value="Mobile Suit Gundam (0079)"></option>
               <option value="Mobile Suit Zeta Gundam"></option>
@@ -785,7 +791,7 @@
             <input type="text" id="kit-model-number" placeholder="e.g. RX-93-v2, MCT-J02, TGB01" />
           </div>
           <div class="form-group">
-            <label for="kit-priority">Wishlist / Build Priority</label>
+            <label for="kit-priority">Priority</label>
             <select id="kit-priority">
               <option value="medium">Medium Priority</option>
               <option value="high">High / Grail Kit</option>
@@ -794,11 +800,10 @@
           </div>
         </div>
 
-        <!-- IDEA 3: DISPLAY LOCATION & SPARE PARTS BOX INDEX -->
         <div class="form-row-2">
           <div class="form-group">
-            <label for="kit-display-location">📍 Display Location (Where is it displayed?)</label>
-            <input type="text" id="kit-display-location" list="location-suggestions" placeholder="e.g. Detolf Cabinet - Shelf 2, Office Desk, Unbuilt Closet" />
+            <label for="kit-display-location">Display Location</label>
+            <input type="text" id="kit-display-location" list="location-suggestions" placeholder="e.g. Detolf Cabinet - Shelf 2, Office Desk" />
             <datalist id="location-suggestions">
               <option value="Detolf Cabinet - Shelf 1"></option>
               <option value="Detolf Cabinet - Shelf 2"></option>
@@ -809,15 +814,14 @@
             </datalist>
           </div>
           <div class="form-group">
-            <label for="kit-storage-box">🗃️ Runner / Spare Parts Box Index</label>
-            <input type="text" id="kit-storage-box" placeholder="e.g. Bin #4 (Extra Hands &amp; Weapons), Original Box in Attic" />
+            <label for="kit-storage-box">Runner / Spare Parts Box Index</label>
+            <input type="text" id="kit-storage-box" placeholder="e.g. Bin #4 (Extra Hands &amp; Weapons), Box in Attic" />
           </div>
         </div>
 
-        <!-- IDEA 4: PRICE VS RETAIL / MSRP & RELEASE DATE -->
         <div class="form-row-3">
           <div class="form-group">
-            <label for="kit-price">Paid / Current Price</label>
+            <label for="kit-price">Paid / Street Price</label>
             <div class="input-inline">
               <input type="number" step="0.01" id="kit-price" placeholder="0.00" />
               <select id="kit-currency" style="max-width: 90px;">
@@ -832,7 +836,7 @@
           </div>
           <div class="form-group">
             <label for="kit-retail-price">MSRP / Retail Price</label>
-            <input type="number" step="0.01" id="kit-retail-price" placeholder="Compare deal vs. MSRP" />
+            <input type="number" step="0.01" id="kit-retail-price" placeholder="MSRP comparison" />
           </div>
           <div class="form-group">
             <label for="kit-rating">Rating (1–5)</label>
@@ -867,19 +871,19 @@
         </div>
 
         <div class="form-group">
-          <label for="kit-store-url">Store / Pre-order / Reference Link</label>
+          <label for="kit-store-url">Store / Reference Link</label>
           <input type="url" id="kit-store-url" placeholder="https://..." />
         </div>
 
         <div class="form-group">
-          <label for="kit-notes">Build Notes / Paint Recipe / LED Mods</label>
-          <textarea id="kit-notes" rows="3" placeholder="Notes on water slides, custom paint mixes, LED wiring, articulation, or spare accessories..."></textarea>
+          <label for="kit-notes">Build Notes / Paint Mixes / LED Wiring</label>
+          <textarea id="kit-notes" rows="3" placeholder="Notes on water slides, paint recipes, LED routing, articulation..."></textarea>
         </div>
 
         <div id="kit-auto-crawl-group" class="form-group">
           <label class="checkbox-inline" style="padding-bottom: 0;">
             <input type="checkbox" id="kit-auto-crawl" />
-            <span>🌐 Auto-crawl cover image from the web (Personal private use only under § 53 UrhG; requires copyright compliance)</span>
+            <span>Auto-crawl cover image from the web (Personal use under § 53 UrhG)</span>
           </label>
         </div>
 
@@ -891,7 +895,7 @@
     </div>
   </div>
 
-  <!-- MODAL: KIT DETAIL (STANCES GALLERY, BUILD MANUALS, QUICK LOOKUPS, LOCATION) -->
+  <!-- MODAL: KIT DETAIL -->
   <div id="kit-detail-modal" class="modal-backdrop hidden">
     <div class="modal-panel modal-xl">
       <div class="modal-header detail-header">
@@ -900,7 +904,7 @@
             <span id="detail-collection-badge" class="badge">Owned</span>
             <span id="detail-category-badge" class="badge badge-outline">Gundam</span>
             <span id="detail-grade-badge" class="badge badge-outline">MG 1/100</span>
-            <span id="detail-location-badge" class="badge badge-outline hidden">📍 Shelf</span>
+            <span id="detail-location-badge" class="badge badge-outline hidden">Shelf</span>
           </div>
           <h2 id="detail-name">Kit Name</h2>
           <p id="detail-subtitle" class="detail-subtitle"></p>
@@ -908,8 +912,8 @@
 
         <div class="detail-header-actions">
           <button type="button" id="detail-toggle-wishlist-btn" class="btn btn-secondary btn-sm">Move to Owned</button>
-          <button type="button" id="detail-edit-btn" class="btn btn-secondary btn-sm">✎ Edit Info</button>
-          <button type="button" id="detail-delete-btn" class="btn btn-danger btn-sm">🗑 Delete</button>
+          <button type="button" id="detail-edit-btn" class="btn btn-secondary btn-sm">Edit</button>
+          <button type="button" id="detail-delete-btn" class="btn btn-danger btn-sm">Delete</button>
           <button type="button" class="modal-close" data-close-modal="kit-detail-modal">&times;</button>
         </div>
       </div>
@@ -932,22 +936,22 @@
           <div id="detail-meta-pills" class="detail-meta-pills"></div>
         </div>
 
-        <!-- IDEA 5: QUICK EXTERNAL DATABASE & MANUAL SCAN LOOKUP BAR -->
+        <!-- Quick Database & Manual Lookup Bar -->
         <div class="quick-lookup-strip">
-          <span class="lookup-label">🔍 Quick Manual &amp; Kit Lookup:</span>
+          <span class="lookup-label">Kit &amp; Manual Lookups:</span>
           <div id="detail-lookup-links" class="lookup-buttons"></div>
         </div>
 
         <!-- Detail Tabs -->
         <div class="detail-tabs">
           <button type="button" class="detail-tab active" data-detail-tab="stances">
-            📸 Stance Photos (<span id="detail-photo-count">0</span>)
+            Stance Photos (<span id="detail-photo-count">0</span>)
           </button>
           <button type="button" class="detail-tab" data-detail-tab="manuals">
-            📘 Building Manuals (<span id="detail-manual-count">0</span>)
+            Building Manuals (<span id="detail-manual-count">0</span>)
           </button>
           <button type="button" class="detail-tab" data-detail-tab="overview">
-            📋 Storage, Specs &amp; Build Notes
+            Storage &amp; Specs
           </button>
         </div>
 
@@ -955,7 +959,7 @@
         <div id="detail-tab-stances" class="detail-tab-pane">
           <div class="stances-actions-toolbar">
             <button type="button" id="open-web-search-modal-btn" class="btn btn-secondary btn-sm">
-              🌐 Search Web for Box Art / Stance Images
+              Search Web for Box Art &amp; Stances
             </button>
           </div>
 
@@ -963,7 +967,7 @@
             <div class="upload-bar-inputs">
               <div class="form-group">
                 <label for="photo-stance-input">Stance / Pose Name</label>
-                <input type="text" id="photo-stance-input" list="stance-suggestions" value="Action Pose" placeholder="e.g. Full Burst Mode, Front Standing, LED Lit" required />
+                <input type="text" id="photo-stance-input" list="stance-suggestions" value="Action Pose" placeholder="e.g. Standard Standing, Full Burst, LED Lit" required />
                 <datalist id="stance-suggestions">
                   <option value="Box Art / Unboxed Runners"></option>
                   <option value="Front / Standard Standing"></option>
@@ -978,7 +982,7 @@
               </div>
               <div class="form-group">
                 <label for="photo-caption-input">Caption / Angle Notes</label>
-                <input type="text" id="photo-caption-input" placeholder="Optional note about this stance..." />
+                <input type="text" id="photo-caption-input" placeholder="Optional notes..." />
               </div>
               <div class="form-group">
                 <label for="photo-file-input">Photo Files (JPG, PNG, WEBP)</label>
@@ -1001,18 +1005,18 @@
             <div class="upload-bar-inputs">
               <div class="form-group">
                 <label for="manual-title-input">Manual Title</label>
-                <input type="text" id="manual-title-input" placeholder="e.g. Main Assembly Manual, Decal Placement Guide, LED Wiring PDF" required />
+                <input type="text" id="manual-title-input" placeholder="e.g. Main Assembly Manual, Decal Guide, LED PDF" required />
               </div>
               <div class="form-group">
                 <label for="manual-file-input">Upload File (PDF or Image Scan)</label>
                 <input type="file" id="manual-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" />
               </div>
               <div class="form-group">
-                <label for="manual-url-input">Or External Manual URL (e.g. Dalong / 1999.co.jp / Mech9)</label>
+                <label for="manual-url-input">External Manual URL (e.g. Dalong, Scalemates, Mech9)</label>
                 <input type="url" id="manual-url-input" placeholder="https://..." />
               </div>
               <div class="form-group">
-                <label for="manual-notes-input">Notes / Page Bookmarks</label>
+                <label for="manual-notes-input">Notes / Bookmarks</label>
                 <input type="text" id="manual-notes-input" placeholder="e.g. Stop at page 18 for LED routing" />
               </div>
               <button type="submit" id="manual-upload-btn" class="btn btn-primary">+ Add Manual</button>
@@ -1032,7 +1036,7 @@
           </div>
         </div>
 
-        <!-- TAB 3: OVERVIEW, STORAGE & SPECS -->
+        <!-- TAB 3: OVERVIEW & SPECS -->
         <div id="detail-tab-overview" class="detail-tab-pane hidden">
           <div id="detail-specs-grid" class="detail-specs-grid"></div>
           <div class="detail-notes-box">
@@ -1061,7 +1065,7 @@
     <div class="modal-panel modal-lg">
       <div class="modal-header">
         <div>
-          <h3>In-App Web Image Search</h3>
+          <h3>Web Image Search</h3>
           <p class="subtitle" style="margin-top:2px;">Find and attach box art or kit action poses directly from the web</p>
         </div>
         <button type="button" class="modal-close" data-close-modal="image-search-modal">&times;</button>
@@ -1069,7 +1073,7 @@
       <div class="modal-body">
         <form id="image-search-form" class="upload-bar-inputs" style="margin-bottom: 14px;">
           <div class="form-group" style="flex: 2;">
-            <label for="image-search-input">Search Query (e.g. Gundam model, Box Art)</label>
+            <label for="image-search-input">Search Query (e.g. Model Name, Box Art)</label>
             <input type="text" id="image-search-input" placeholder="e.g. MGEX Strike Freedom box art" required />
           </div>
           <div class="form-group" style="flex: 1;">
@@ -1080,49 +1084,49 @@
             <input type="checkbox" id="image-search-cover" checked />
             <span>Set as Cover</span>
           </label>
-          <button type="submit" id="image-search-submit-btn" class="btn btn-primary">🔍 Search</button>
+          <button type="submit" id="image-search-submit-btn" class="btn btn-primary">Search</button>
         </form>
 
         <div id="image-search-status" class="view-subtitle" style="margin-bottom: 10px;"></div>
         <div id="image-search-results" class="web-image-results-grid"></div>
 
-        <form id="image-direct-url-form" class="upload-bar-inputs" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+        <form id="image-direct-url-form" class="upload-bar-inputs" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
           <div class="form-group" style="flex: 3;">
-            <label for="image-direct-url-input">Or Paste Any Direct Image URL</label>
+            <label for="image-direct-url-input">Or Paste Direct Image URL</label>
             <input type="url" id="image-direct-url-input" placeholder="https://example.com/kit-box-art.jpg" required />
           </div>
-          <button type="submit" id="image-direct-url-btn" class="btn btn-secondary">+ Import Image URL</button>
+          <button type="submit" id="image-direct-url-btn" class="btn btn-secondary">Import Image URL</button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: LEGAL NOTICE & IMPRESSUM (§ 5 DDG / DSGVO / TRADEMARKS) -->
+  <!-- MODAL: LEGAL NOTICE & IMPRESSUM -->
   <div id="legal-modal" class="modal-backdrop hidden">
     <div class="modal-panel modal-lg">
       <div class="modal-header">
         <div>
-          <h3>Legal Information, Impressum &amp; Copyright</h3>
+          <h3>Legal Notice, Impressum &amp; Copyright</h3>
           <p class="subtitle" style="margin-top: 2px;">Rechtliche Hinweise gem. § 5 DDG, UrhG und MarkenG</p>
         </div>
         <button type="button" class="modal-close" data-close-modal="legal-modal">&times;</button>
       </div>
       <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; line-height: 1.6;">
         <div>
-          <h4 style="margin-bottom: 6px;">1. Trademark &amp; Brand Notice (§ 23 MarkenG)</h4>
-          <p id="legal-trademark-text" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+          <h4 style="margin-bottom: 6px; font-weight: 500;">1. Trademark &amp; Brand Notice (§ 23 MarkenG)</h4>
+          <p id="legal-trademark-text" style="color: var(--text-muted); font-size: 0.85rem;"></p>
         </div>
         <div>
-          <h4 style="margin-bottom: 6px;">2. Copyright &amp; Media Licensing (UrhG)</h4>
-          <p id="legal-copyright-text" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+          <h4 style="margin-bottom: 6px; font-weight: 500;">2. Copyright &amp; Media Licensing (UrhG)</h4>
+          <p id="legal-copyright-text" style="color: var(--text-muted); font-size: 0.85rem;"></p>
         </div>
         <div>
-          <h4 style="margin-bottom: 6px;">3. Provider Identification / Impressum (§ 5 DDG)</h4>
-          <div id="legal-impressum-content" style="background: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); font-size: 0.88rem; white-space: pre-wrap;">Not configured by server administrator.</div>
+          <h4 style="margin-bottom: 6px; font-weight: 500;">3. Provider Identification / Impressum (§ 5 DDG)</h4>
+          <div id="legal-impressum-content" style="background: var(--bg-base); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 0.84rem; white-space: pre-wrap;">Not configured by server administrator.</div>
         </div>
         <div>
-          <h4 style="margin-bottom: 6px;">4. Privacy Notice (Art. 13 DSGVO)</h4>
-          <div id="legal-privacy-content" style="background: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); font-size: 0.88rem; white-space: pre-wrap;">When accessing this service, technical connection data (e.g. IP address, browser user-agent) is processed temporarily to transmit HTTP content.</div>
+          <h4 style="margin-bottom: 6px; font-weight: 500;">4. Privacy Notice (Art. 13 DSGVO)</h4>
+          <div id="legal-privacy-content" style="background: var(--bg-base); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 0.84rem; white-space: pre-wrap;">When accessing this service, technical connection data (e.g. IP address, browser user-agent) is processed temporarily to transmit HTTP content.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -1131,6 +1135,6 @@
     </div>
   </div>
 
-  <script src="/app.js?v=9"></script>
+  <script src="/app.js?v=10"></script>
 </body>
 </html>

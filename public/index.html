@@ -248,15 +248,6 @@
           <div class="filter-controls">
             <select id="filter-category">
               <option value="">All Categories</option>
-              <option value="Gundam / Gunpla">Gundam / Gunpla</option>
-              <option value="Moshow Toys / Mecha">Moshow Toys / Mecha</option>
-              <option value="Book Nook / Diorama">Book Nook / Diorama</option>
-              <option value="30 Minutes Missions / Sisters">30 Minutes Missions / Sisters</option>
-              <option value="Zoids / Kotobukiya">Zoids / Kotobukiya</option>
-              <option value="Evangelion / Moderoid">Evangelion / Moderoid</option>
-              <option value="Military / Scale Vehicle">Military / Scale Vehicle</option>
-              <option value="Wood / Metal Puzzle">Wood / Metal Puzzle</option>
-              <option value="Other Kit">Other Kit</option>
             </select>
 
             <select id="filter-status">
@@ -537,11 +528,6 @@
               <div class="form-group">
                 <label for="user-ai-provider">AI Provider</label>
                 <select id="user-ai-provider">
-                  <option value="gemini">Google Gemini (generativelanguage.googleapis.com)</option>
-                  <option value="openai">OpenAI (api.openai.com)</option>
-                  <option value="anthropic">Anthropic Claude (api.anthropic.com)</option>
-                  <option value="openrouter">OpenRouter (openrouter.ai)</option>
-                  <option value="custom">Custom (OpenAI-Compatible Endpoint)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -707,37 +693,14 @@
         <div class="form-row-3">
           <div class="form-group">
             <label for="kit-category">Category</label>
-            <input type="text" id="kit-category" list="category-suggestions" placeholder="e.g. Gundam / Gunpla" />
+            <input type="text" id="kit-category" list="category-suggestions" placeholder="Auto-detected if left blank" />
             <datalist id="category-suggestions">
-              <option value="Gundam / Gunpla"></option>
-              <option value="Moshow Toys / Mecha"></option>
-              <option value="Book Nook / Diorama"></option>
-              <option value="30 Minutes Missions / Sisters"></option>
-              <option value="Zoids / Kotobukiya"></option>
-              <option value="Evangelion / Moderoid"></option>
-              <option value="Military / Scale Vehicle"></option>
-              <option value="Wood / Metal Puzzle"></option>
             </datalist>
           </div>
           <div class="form-group">
             <label for="kit-brand">Brand / Manufacturer</label>
             <input type="text" id="kit-brand" list="brand-suggestions" placeholder="e.g. Bandai Spirits, Moshow, Rolife" />
             <datalist id="brand-suggestions">
-              <option value="Bandai Spirits"></option>
-              <option value="Moshow Toys"></option>
-              <option value="Rolife / Robotime"></option>
-              <option value="Kotobukiya"></option>
-              <option value="Good Smile / Moderoid"></option>
-              <option value="In Era+ / Infinite Dimension"></option>
-              <option value="Motor Nuclear"></option>
-              <option value="SNAA"></option>
-              <option value="Cutebee"></option>
-              <option value="Tonecheer"></option>
-              <option value="Flame Toys"></option>
-              <option value="Takara Tomy"></option>
-              <option value="Tamiya"></option>
-              <option value="Hasegawa"></option>
-              <option value="Meng"></option>
             </datalist>
           </div>
           <div class="form-group">

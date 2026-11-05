@@ -22,6 +22,7 @@
     activeKitId: null,
     searchQuery: '',
     filterCategory: '',
+    taxonomy: { categories: [], brands: [] },
     filterStatus: '',
     filterLocation: '',
     sortBy: 'updated_desc'
@@ -135,7 +136,7 @@
         $('app-shell').classList.remove('hidden');
         renderUserSidebar();
         syncShowcaseSettingsUI();
-        await loadKits();
+        await Promise.all([loadTaxonomy(), loadKits()]);
       } else {
         $('app-shell').classList.add('hidden');
         $('auth-screen').classList.remove('hidden');
@@ -211,6 +212,40 @@
   }
 
   // LOAD & RENDER KITS
+  async function loadTaxonomy() {
+    try {
+      state.taxonomy = await api('/api/taxonomy');
+    } catch (_) {
+      // Suggestions are optional: the lists still show the user's own values.
+    }
+  }
+
+  // Registry values plus anything the user has actually stored
+  function mergedSuggestions(registry, field) {
+    const own = state.kits.map((k) => k[field]).filter(Boolean);
+    return [...new Set([...(registry || []), ...own])];
+  }
+
+  function renderTaxonomyOptions() {
+    const categories = mergedSuggestions(state.taxonomy.categories, 'category');
+    const brands = mergedSuggestions(state.taxonomy.brands, 'brand');
+    const toOptions = (values) =>
+      values.map((v) => `<option value="${escapeHtml(v)}"></option>`).join('');
+
+    $('category-suggestions').innerHTML = toOptions(categories);
+    $('brand-suggestions').innerHTML = toOptions(brands);
+
+    const filterValues = [...new Set([...categories, state.filterCategory].filter(Boolean))];
+    $('filter-category').innerHTML =
+      '<option value="">All Categories</option>' +
+      filterValues
+        .map(
+          (c) =>
+            `<option value="${escapeHtml(c)}" ${c === state.filterCategory ? 'selected' : ''}>${escapeHtml(c)}</option>`
+        )
+        .join('');
+  }
+
   async function loadKits() {
     const data = await api('/api/kits');
     state.kits = data.kits || [];
@@ -264,6 +299,8 @@
         )
         .join('');
 
+    renderTaxonomyOptions();
+
     // Render dynamic categories in sidebar
     const catCounts = {};
     for (const k of state.kits) {
@@ -309,7 +346,7 @@
       }
     } else if (state.activeNav.startsWith('cat:')) {
       const cat = state.activeNav.slice(4);
-      list = list.filter((k) => k.category === cat);
+      list = list.filter((k) => (k.category || 'Uncategorized') === cat);
     }
 
     // Toolbar dropdown filters
@@ -695,7 +732,7 @@
       $('kit-collection-type').value = kit.collection_type;
       $('kit-status').value = kit.status;
       $('kit-name').value = kit.name;
-      $('kit-category').value = kit.category || 'Gundam / Gunpla';
+      $('kit-category').value = kit.category || '';
       $('kit-brand').value = kit.brand || '';
       $('kit-grade-scale').value = kit.grade_scale || '';
       $('kit-series').value = kit.series || '';
@@ -720,7 +757,7 @@
       $('kit-id').value = '';
       $('kit-collection-type').value = defaultCollectionType;
       $('kit-status').value = defaultCollectionType === 'wishlist' ? 'wishlist' : 'backlog';
-      $('kit-category').value = 'Gundam / Gunpla';
+      $('kit-category').value = '';
       $('kit-currency').value = 'USD';
       $('kit-priority').value = 'medium';
       $('kit-auto-crawl').checked = false;
@@ -752,28 +789,10 @@
   }
 
   // SMART KIT LOOKUP, AUTOFILL & PERSONAL AI CONFIGURATION
-  const AI_PROVIDER_DEFAULTS = {
-    gemini: {
-      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-      model: 'gemini-2.5-flash'
-    },
-    openai: {
-      baseUrl: 'https://api.openai.com/v1',
-      model: 'gpt-4o-mini'
-    },
-    anthropic: {
-      baseUrl: 'https://api.anthropic.com/v1',
-      model: 'claude-3-5-haiku-latest'
-    },
-    openrouter: {
-      baseUrl: 'https://openrouter.ai/api/v1',
-      model: 'google/gemini-2.5-flash'
-    },
-    custom: {
-      baseUrl: 'https://api.openai.com/v1',
-      model: ''
-    }
-  };
+  // The server's provider registry is delivered with the user's AI settings
+  function aiProviders() {
+    return state.user?.aiSettings?.providers || {};
+  }
 
   function updateAiStatusIndicator() {
     const label = $('kit-ai-status-label');
@@ -798,11 +817,13 @@
 
       $('user-ai-account-handle').textContent = `@${state.user.username}`;
       $('user-ai-enabled').checked = Boolean(ai.enabled);
-      $('user-ai-provider').value = ai.provider || 'gemini';
-      $('user-ai-model').value = ai.model || AI_PROVIDER_DEFAULTS[ai.provider || 'gemini']?.model || '';
+      $('user-ai-provider').innerHTML = Object.entries(aiProviders())
+        .map(([id, p]) => `<option value="${escapeHtml(id)}">${escapeHtml(p.name)}</option>`)
+        .join('');
+      $('user-ai-provider').value = ai.provider;
+      $('user-ai-model').value = ai.model || '';
       $('user-ai-base-url').value = ai.baseUrl || '';
-      $('user-ai-base-url').placeholder =
-        AI_PROVIDER_DEFAULTS[ai.provider || 'gemini']?.baseUrl || 'https://...';
+      $('user-ai-base-url').placeholder = aiProviders()[ai.provider]?.baseUrl || 'https://...';
       $('user-ai-api-key').value = '';
 
       const keyBadge = $('user-ai-key-badge');
@@ -1678,7 +1699,7 @@
         collection_type: $('kit-collection-type').value,
         status: $('kit-status').value,
         name: $('kit-name').value.trim(),
-        category: $('kit-category').value.trim() || 'Gundam / Gunpla',
+        category: $('kit-category').value.trim(),
         brand: $('kit-brand').value.trim(),
         grade_scale: $('kit-grade-scale').value.trim(),
         series: $('kit-series').value.trim(),
@@ -1763,7 +1784,9 @@
 
     $('user-ai-provider')?.addEventListener('change', (e) => {
       const prov = e.target.value;
-      const defaults = AI_PROVIDER_DEFAULTS[prov] || { baseUrl: '', model: '' };
+      const defaults = aiProviders()[prov] || { baseUrl: '', model: '' };
+      // Endpoints belong to one vendor: don't carry the previous provider's URL over.
+      $('user-ai-base-url').value = '';
       $('user-ai-base-url').placeholder = defaults.baseUrl || 'https://...';
       $('user-ai-model').value = defaults.model || '';
     });

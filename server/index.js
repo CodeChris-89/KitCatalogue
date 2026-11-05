@@ -20,7 +20,14 @@ const {
 const { parseMultipart } = require('./multipart');
 const { searchWebImages, attachImageFromUrl, autoCrawlCoverImage } = require('./websearch');
 const {
+  CATEGORY_NAMES,
+  BRAND_NAMES,
+  normalizeBrand,
+  resolveKitCategory
+} = require('./taxonomy');
+const {
   PROVIDER_DEFAULTS,
+  buildAiTestConfig,
   getUserAiConfigPublic,
   saveUserAiConfig,
   lookupKitCandidates,
@@ -477,6 +484,11 @@ async function handleApi(req, res, urlObj) {
     return sendJson(res, 200, { ok: true });
   }
 
+  // Category and brand suggestions for the kit form and filters
+  if (pathname === '/api/taxonomy' && method === 'GET') {
+    return sendJson(res, 200, { categories: CATEGORY_NAMES, brands: BRAND_NAMES });
+  }
+
   // Per-User Encrypted AI Provider & API Key Settings (Isolated to currentUser.id)
   if (pathname === '/api/user/ai-settings' && method === 'GET') {
     return sendJson(res, 200, { aiSettings: getUserAiConfigPublic(currentUser.id) });
@@ -495,33 +507,8 @@ async function handleApi(req, res, urlObj) {
   if (pathname === '/api/user/ai-settings/test' && method === 'POST') {
     try {
       const body = await readJsonBody(req);
-      const stored = getUserAiConfigInternal(currentUser.id);
-      const provider = PROVIDER_DEFAULTS[body.provider]
-        ? body.provider
-        : stored?.provider || 'gemini';
-      const apiKey =
-        typeof body.apiKey === 'string' && body.apiKey.trim()
-          ? body.apiKey.trim()
-          : stored?.apiKey || '';
-
-      if (!apiKey) {
-        return sendJson(res, 400, {
-          error: 'No API Key provided or saved for your account.'
-        });
-      }
-
-      const testConfig = {
-        provider,
-        apiKey,
-        baseUrl:
-          body.baseUrl !== undefined
-            ? String(body.baseUrl).trim()
-            : stored?.baseUrl || PROVIDER_DEFAULTS[provider]?.baseUrl || '',
-        model:
-          body.model !== undefined && String(body.model).trim()
-            ? String(body.model).trim()
-            : stored?.model || PROVIDER_DEFAULTS[provider]?.model || ''
-      };
+      const testConfig = buildAiTestConfig(getUserAiConfigInternal(currentUser.id), body);
+      const provider = testConfig.provider;
 
       const sample = await callAiForKitExtraction(
         testConfig,
@@ -714,8 +701,8 @@ async function handleApi(req, res, urlObj) {
         .run(
           currentUser.id,
           name,
-          String(item.category || 'Gundam / Gunpla').trim(),
-          String(item.brand || '').trim(),
+          resolveKitCategory(item),
+          normalizeBrand(item.brand),
           String(item.series || '').trim(),
           String(item.grade_scale || '').trim(),
           String(item.model_number || '').trim(),
@@ -857,8 +844,8 @@ async function handleApi(req, res, urlObj) {
       .run(
         currentUser.id,
         name,
-        String(body.category || 'Gundam / Gunpla').trim(),
-        String(body.brand || '').trim(),
+        resolveKitCategory(body),
+        normalizeBrand(body.brand),
         String(body.series || '').trim(),
         String(body.grade_scale || '').trim(),
         String(body.model_number || '').trim(),
@@ -986,8 +973,8 @@ async function handleApi(req, res, urlObj) {
          WHERE id = ? AND user_id = ?`
       ).run(
         name,
-        body.category !== undefined ? String(body.category).trim() : existing.category,
-        body.brand !== undefined ? String(body.brand).trim() : existing.brand,
+        body.category !== undefined ? resolveKitCategory({ ...existing, ...body }) : existing.category,
+        body.brand !== undefined ? normalizeBrand(body.brand) : existing.brand,
         body.series !== undefined ? String(body.series).trim() : existing.series,
         body.grade_scale !== undefined ? String(body.grade_scale).trim() : existing.grade_scale,
         body.model_number !== undefined ? String(body.model_number).trim() : existing.model_number,

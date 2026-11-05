@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node --no-warnings server/index.js",
     "dev": "node --watch --no-warnings server/index.js",
-    "test": "node --no-warnings test/smoke.test.js"
+    "test": "node --no-warnings test/taxonomy.test.js && node --no-warnings test/smoke.test.js"
   },
   "engines": {
     "node": ">=22.5.0"

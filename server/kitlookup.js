@@ -1,34 +1,96 @@
 const { getDb } = require('./db');
 const { encryptSecret, decryptSecret, maskApiKey } = require('./crypto');
 const { isSafeUrl, isAllowedByRobots, USER_AGENT, searchWebImages } = require('./websearch');
+const {
+  CATEGORY_NAMES,
+  isKnownCategory,
+  normalizeCategory,
+  normalizeBrand,
+  classifyKit,
+  detectGradeScale
+} = require('./taxonomy');
 
+/**
+ * AI provider registry. Adding a provider means adding one entry here: `apiStyle`
+ * selects the request adapter in API_ADAPTERS. The UI renders from this table.
+ * `legacyDefaultModels` lists former defaults that may be saved in user rows, so
+ * retired models are replaced instead of failing every request.
+ */
 const PROVIDER_DEFAULTS = {
   gemini: {
     name: 'Google Gemini',
+    apiStyle: 'gemini',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     model: 'gemini-2.5-flash'
   },
   openai: {
     name: 'OpenAI',
+    apiStyle: 'openai',
     baseUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini'
   },
   anthropic: {
     name: 'Anthropic Claude',
+    apiStyle: 'anthropic',
     baseUrl: 'https://api.anthropic.com/v1',
-    model: 'claude-3-5-haiku-latest'
+    model: 'claude-haiku-5-5',
+    legacyDefaultModels: ['claude-3-5-haiku-latest']
   },
   openrouter: {
     name: 'OpenRouter',
+    apiStyle: 'openai',
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'google/gemini-2.5-flash'
   },
   custom: {
     name: 'Custom (OpenAI-Compatible)',
+    apiStyle: 'openai',
     baseUrl: '',
-    model: ''
+    model: '',
+    requiresBaseUrl: true,
+    requiresModel: true
   }
 };
+
+const DEFAULT_PROVIDER = 'gemini';
+const AI_REQUEST_TIMEOUT_MS = 60000;
+
+function isKnownProvider(id) {
+  return typeof id === 'string' && Object.hasOwn(PROVIDER_DEFAULTS, id);
+}
+
+function storableModel(provider, model) {
+  const defaults = PROVIDER_DEFAULTS[provider];
+  const clean = String(model ?? '').trim();
+  return clean === defaults.model || defaults.legacyDefaultModels?.includes(clean) ? '' : clean;
+}
+
+function effectiveModel(provider, model) {
+  return storableModel(provider, model) || PROVIDER_DEFAULTS[provider].model;
+}
+
+function assertValidBaseUrl(baseUrl) {
+  if (!baseUrl) return;
+  let parsed;
+  try {
+    parsed = new URL(baseUrl);
+  } catch (_) {
+    throw new Error('Invalid custom provider Base URL');
+  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error('Base URL must use http:// or https://');
+  }
+}
+
+function assertProviderRequirements(provider, baseUrl, model) {
+  const defaults = PROVIDER_DEFAULTS[provider];
+  if (defaults.requiresBaseUrl && !baseUrl) {
+    throw new Error(`${defaults.name} requires a Base URL (e.g. https://host/v1)`);
+  }
+  if (defaults.requiresModel && !model) {
+    throw new Error(`${defaults.name} requires a model name`);
+  }
+}
 
 /**
  * Built-in curated index of popular Building Kits across categories (Gunpla, Moshow, Book Nooks, Zoids, etc.)
@@ -217,7 +279,7 @@ const CURATED_KITS = [
   },
   {
     name: 'Moshow Toys 1/72 Takeda Shingen (MCT-J02)',
-    category: 'Moshow Toys / Mecha',
+    category: 'Third-Party Mecha',
     brand: 'Moshow Toys',
     gradeScale: '1/72 Progenitor Effect',
     series: 'Progenitor Effect',
@@ -229,7 +291,7 @@ const CURATED_KITS = [
   },
   {
     name: 'Moshow Toys 1/72 Date Masamune Bontenmaru (MCT-J03)',
-    category: 'Moshow Toys / Mecha',
+    category: 'Third-Party Mecha',
     brand: 'Moshow Toys',
     gradeScale: '1/72 Progenitor Effect',
     series: 'Progenitor Effect',
@@ -241,7 +303,7 @@ const CURATED_KITS = [
   },
   {
     name: 'Moshow Toys 1/72 Lancelot of the Lake (MCT-E02)',
-    category: 'Moshow Toys / Mecha',
+    category: 'Third-Party Mecha',
     brand: 'Moshow Toys',
     gradeScale: '1/72 Progenitor Effect',
     series: 'Progenitor Effect',
@@ -313,9 +375,9 @@ const CURATED_KITS = [
   },
   {
     name: 'In Era+ 1/100 Ruling Type 01 Mecha',
-    category: 'Moshow Toys / Mecha',
+    category: 'Third-Party Mecha',
     brand: 'In Era+ / Infinite Dimension',
-    gradeScale: 'MG 1/100',
+    gradeScale: '1/100',
     series: 'Realminfinity Series',
     modelNumber: 'RMD-01',
     releaseDate: '2023-02-01',
@@ -336,27 +398,29 @@ function getUserAiConfigPublic(userId) {
     )
     .get(userId);
 
-  if (!row) {
+  // A row naming a provider that no longer exists has no usable config. Its key
+  // must not be reused for a different vendor.
+  if (!row || !isKnownProvider(row.provider)) {
     return {
-      provider: 'gemini',
+      provider: DEFAULT_PROVIDER,
       hasApiKey: false,
       maskedKey: '',
       baseUrl: '',
-      model: PROVIDER_DEFAULTS.gemini.model,
+      model: PROVIDER_DEFAULTS[DEFAULT_PROVIDER].model,
       enabled: false,
       providers: PROVIDER_DEFAULTS
     };
   }
 
   const decryptedKey = decryptSecret(row.api_key_encrypted);
-  const provider = PROVIDER_DEFAULTS[row.provider] ? row.provider : 'gemini';
+  const provider = row.provider;
 
   return {
     provider,
     hasApiKey: Boolean(decryptedKey),
     maskedKey: maskApiKey(decryptedKey),
     baseUrl: row.base_url || '',
-    model: row.model || PROVIDER_DEFAULTS[provider].model,
+    model: effectiveModel(provider, row.model),
     enabled: Boolean(row.enabled) && Boolean(decryptedKey),
     updatedAt: row.updated_at,
     providers: PROVIDER_DEFAULTS
@@ -376,19 +440,49 @@ function getUserAiConfigInternal(userId) {
     )
     .get(userId);
 
-  if (!row) return null;
+  if (!row || !isKnownProvider(row.provider)) return null;
   const apiKey = decryptSecret(row.api_key_encrypted);
   if (!apiKey) return null;
 
-  const provider = PROVIDER_DEFAULTS[row.provider] ? row.provider : 'gemini';
+  const provider = row.provider;
   const defaults = PROVIDER_DEFAULTS[provider];
 
   return {
     provider,
     apiKey,
     baseUrl: (row.base_url || defaults.baseUrl || '').replace(/\/+$/, ''),
-    model: row.model || defaults.model,
+    model: effectiveModel(provider, row.model),
     enabled: Boolean(row.enabled)
+  };
+}
+
+/**
+ * Builds the config for a connection test from unsaved form values. Saved values
+ * are only reused for the same provider, so a stored key is never sent to another vendor.
+ */
+function buildAiTestConfig(stored, body = {}) {
+  const provider = isKnownProvider(body.provider)
+    ? body.provider
+    : stored?.provider || DEFAULT_PROVIDER;
+  const saved = stored?.provider === provider ? stored : null;
+  const defaults = PROVIDER_DEFAULTS[provider];
+
+  const apiKey = (typeof body.apiKey === 'string' && body.apiKey.trim()) || saved?.apiKey || '';
+  if (!apiKey) {
+    throw new Error(`No API Key provided or saved for ${defaults.name}.`);
+  }
+
+  const baseUrl =
+    body.baseUrl !== undefined
+      ? String(body.baseUrl).trim() || defaults.baseUrl
+      : saved?.baseUrl || defaults.baseUrl;
+  assertValidBaseUrl(baseUrl);
+
+  return {
+    provider,
+    apiKey,
+    baseUrl,
+    model: String(body.model ?? '').trim() || saved?.model || defaults.model
   };
 }
 
@@ -401,23 +495,24 @@ function saveUserAiConfig(userId, body = {}) {
     .prepare('SELECT provider, api_key_encrypted, base_url, model, enabled FROM user_ai_settings WHERE user_id = ?')
     .get(userId);
 
-  const provider = PROVIDER_DEFAULTS[body.provider]
+  const provider = isKnownProvider(body.provider)
     ? body.provider
-    : existing?.provider || 'gemini';
+    : isKnownProvider(existing?.provider)
+      ? existing.provider
+      : DEFAULT_PROVIDER;
+  // Keys, endpoints and model names belong to one vendor; none survive a switch.
+  const carried = existing?.provider === provider ? existing : null;
 
-  let encryptedKey = existing?.api_key_encrypted || '';
+  let encryptedKey = carried?.api_key_encrypted || '';
   if (body.clearApiKey) {
     encryptedKey = '';
   } else if (typeof body.apiKey === 'string' && body.apiKey.trim().length > 0) {
     encryptedKey = encryptSecret(body.apiKey.trim());
   }
 
-  const baseUrl =
-    body.baseUrl !== undefined ? String(body.baseUrl).trim() : existing?.base_url || '';
-  const model =
-    body.model !== undefined
-      ? String(body.model).trim()
-      : existing?.model || PROVIDER_DEFAULTS[provider].model;
+  const baseUrl = body.baseUrl !== undefined ? String(body.baseUrl).trim() : carried?.base_url || '';
+  // The default is stored as '' so that future default bumps reach this user.
+  const model = storableModel(provider, body.model !== undefined ? body.model : carried?.model);
   const enabled =
     body.enabled !== undefined
       ? body.enabled
@@ -427,16 +522,8 @@ function saveUserAiConfig(userId, body = {}) {
         ? existing.enabled
         : 1;
 
-  if (baseUrl) {
-    try {
-      const parsed = new URL(baseUrl);
-      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-        throw new Error('Base URL must use http:// or https://');
-      }
-    } catch (_) {
-      throw new Error('Invalid custom provider Base URL');
-    }
-  }
+  assertValidBaseUrl(baseUrl);
+  if (enabled) assertProviderRequirements(provider, baseUrl, model);
 
   db.prepare(
     `INSERT INTO user_ai_settings (user_id, provider, api_key_encrypted, base_url, model, enabled, updated_at)
@@ -465,71 +552,23 @@ function parseKitMetadataFromText(rawTitle = '', rawSnippet = '', sourceUrl = ''
     .replace(/^(Amazon\.com\s*:\s*|Buy\s+)/i, '')
     .trim();
 
-  // 2. Detect Grade / Scale
-  let gradeScale = extra.gradeScale || '';
-  if (!gradeScale) {
-    const gradePatterns = [
-      { re: /\bPG\s*Unleashed\b|\bPGU\b/i, val: 'PG Unleashed 1/60' },
-      { re: /\bMGEX\b/i, val: 'MGEX 1/100' },
-      { re: /\bMGSD\b/i, val: 'SD / MGSD' },
-      { re: /\b(Master Grade|MG)\s*(1\/100)?\b/i, val: 'MG 1/100' },
-      { re: /\b(Real Grade|RG)\s*(1\/144)?\b/i, val: 'RG 1/144' },
-      { re: /\b(Perfect Grade|PG)\s*(1\/60)?\b/i, val: 'PG 1/60' },
-      { re: /\b(High Grade|HGUC|HGCE|HGIBO|HGTWFM|HGGTO|HGAC|HGFC|HGBF|HGBD|HG)\s*(1\/144)?\b/i, val: 'HG 1/144' },
-      { re: /\b(Full Mechanics|FM)\s*(1\/100)?\b/i, val: 'FM 1/100' },
-      { re: /\bRE\/100\b/i, val: 'RE/100' },
-      { re: /\b(Entry Grade|EG)\s*(1\/144)?\b/i, val: 'EG 1/144' },
-      { re: /\b(SDCS|SDEX|SDW|SD\s+Gundam|BB\s+Senshi)\b/i, val: 'SD / MGSD' },
-      { re: /\b30\s*MM\b|\b30\s*Minutes\s*Missions\b/i, val: '30MM 1/144' },
-      { re: /\b30\s*MS\b|\b30\s*Minutes\s*Sisters\b/i, val: '30MS Non-Scale' },
-      { re: /\b1\/72\b/i, val: '1/72' },
-      { re: /\b1\/60\b/i, val: '1/60' },
-      { re: /\b1\/100\b/i, val: '1/100' },
-      { re: /\b1\/144\b/i, val: '1/144' },
-      { re: /\b1\/24\b/i, val: '1/24' },
-      { re: /\b1\/35\b/i, val: '1/35' },
-      { re: /\b1\/48\b/i, val: '1/48' }
-    ];
-    for (const gp of gradePatterns) {
-      if (gp.re.test(combined)) {
-        gradeScale = gp.val;
-        break;
-      }
-    }
-  }
+  // 2. Classify. Explicit values from the caller (a selected candidate, JSON-LD) win.
+  const classification = classifyKit({
+    title: rawTitle,
+    brand: extra.brand,
+    context: [rawSnippet, extra.classificationHint].filter(Boolean).join(' ')
+  });
+  const category =
+    normalizeCategory(extra.category) ||
+    (!classification.matched && extra.fallbackCategory) ||
+    classification.category;
+  const brand = classification.brand;
 
-  // 3. Detect Brand & Category
-  let brand = extra.brand || '';
-  let category = extra.category || 'Gundam / Gunpla';
-
-  if (/moshow|progenitor\s+effect|mct-[a-z0-9]+/i.test(combined)) {
-    brand = brand || 'Moshow Toys';
-    category = 'Moshow Toys / Mecha';
-    if (!gradeScale) gradeScale = '1/72 Progenitor Effect';
-  } else if (/rolife|robotime|cutebee|tonecheer|book\s*nook|tgb\d+/i.test(combined)) {
-    brand = brand || (/cutebee/i.test(combined) ? 'Cutebee' : /tonecheer/i.test(combined) ? 'Tonecheer' : 'Rolife / Robotime');
-    category = 'Book Nook / Diorama';
-    if (!gradeScale) gradeScale = 'Book Nook Standard';
-  } else if (/30\s*minutes\s*(missions|sisters|fantasy)|\b30mm\b|\b30ms\b|\b30mf\b/i.test(combined)) {
-    brand = brand || 'Bandai Spirits';
-    category = '30 Minutes Missions / Sisters';
-  } else if (/zoids|kotobukiya|hmm\b|megami\s+device|frame\s+arms|hexa\s+gear/i.test(combined)) {
-    brand = brand || 'Kotobukiya';
-    category = 'Zoids / Kotobukiya';
-  } else if (/moderoid|good\s+smile|evangelion/i.test(combined)) {
-    brand = brand || (/moderoid|good\s+smile/i.test(combined) ? 'Good Smile / Moderoid' : 'Bandai Spirits');
-    category = 'Evangelion / Moderoid';
-  } else if (/in\s+era\+|infinite\s+dimension|motor\s+nuclear|snaa\b/i.test(combined)) {
-    brand = brand || (/motor\s+nuclear/i.test(combined) ? 'Motor Nuclear' : 'In Era+ / Infinite Dimension');
-    category = 'Moshow Toys / Mecha';
-  } else if (/tamiya|hasegawa|meng|academy|revell|italeri|trumpeter/i.test(combined)) {
-    const bMatch = combined.match(/\b(Tamiya|Hasegawa|Meng|Academy|Revell|Italeri|Trumpeter)\b/i);
-    brand = brand || (bMatch ? bMatch[1] : 'Tamiya');
-    category = 'Military / Scale Vehicle';
-  } else if (/gundam|gunpla|bandai|zaku|sazabi|sinanju|pla-?model/i.test(combined)) {
-    brand = brand || 'Bandai Spirits';
-    category = 'Gundam / Gunpla';
-  }
+  // 3. Detect Grade / Scale, trusting the title over descriptive text
+  const gradeScale =
+    extra.gradeScale ||
+    detectGradeScale(rawTitle, category) ||
+    detectGradeScale(combined, category, classification.defaultGrade);
 
   // 4. Detect Model / Frame / Kit Code
   let modelNumber = extra.modelNumber || '';
@@ -647,6 +686,12 @@ function parseKitMetadataFromText(rawTitle = '', rawSnippet = '', sourceUrl = ''
   };
 }
 
+const CURATED_MIN_COVERAGE = 0.6;
+const CURATED_GENERIC_TOKENS = new Set([
+  'kit', 'kits', 'model', 'scale', 'ver', 'the', 'gundam', 'gunpla', 'bandai', 'spirits',
+  'book', 'nook', 'rolife', 'robotime', 'moshow', 'toys', 'mecha', 'kotobukiya'
+]);
+
 /**
  * Searches the Curated Kits database for immediate local matches.
  */
@@ -657,9 +702,17 @@ function searchCuratedKits(query, limit = 5) {
     .filter((t) => t.length >= 2);
   if (!tokens.length) return [];
 
+  // Words naming a kit: brand, line and scale tokens alone do not identify one.
+  const distinctive = tokens.filter((t) => !CURATED_GENERIC_TOKENS.has(t) && !/^\d+$/.test(t));
+
   const scored = [];
   for (const kit of CURATED_KITS) {
     const haystack = `${kit.name} ${kit.brand} ${kit.gradeScale} ${kit.series} ${kit.modelNumber} ${kit.category}`.toLowerCase();
+    const identity = `${kit.name} ${kit.gradeScale} ${kit.series} ${kit.modelNumber}`.toLowerCase();
+    const covered = distinctive.filter((t) => identity.includes(t)).length;
+    // Otherwise "Rolife Cathy's Flower House" resolves to some other Rolife kit.
+    if (distinctive.length && covered / distinctive.length < CURATED_MIN_COVERAGE) continue;
+
     let score = 0;
     for (const token of tokens) {
       if (haystack.includes(token)) score += 2;
@@ -722,7 +775,8 @@ async function searchFandomWiki(query, limit = 5) {
         .map((p) => {
           const parsed = parseKitMetadataFromText(p.title, p.extract || '', p.fullurl || '', {
             imageUrl: p.thumbnail?.source || '',
-            sourceName: 'Gundam / Gunpla Wiki'
+            sourceName: 'Gundam / Gunpla Wiki',
+            fallbackCategory: 'Gundam / Gunpla'
           });
           return {
             ...parsed,
@@ -749,7 +803,8 @@ async function searchWebKitCandidates(query, limit = 5) {
     const imgResults = await searchWebImages(`${query} model kit box art`, limit);
     return imgResults.map((img) => {
       const parsed = parseKitMetadataFromText(img.title, '', img.source || '', {
-        imageUrl: img.image || img.thumbnail || ''
+        imageUrl: img.image || img.thumbnail || '',
+        classificationHint: query
       });
       return {
         ...parsed,
@@ -770,9 +825,13 @@ async function lookupKitCandidates(query) {
   const clean = String(query || '').trim();
   if (!clean) return [];
 
+  // The wikis only cover Gundam: don't let them answer for a recognised other line.
+  const queryClass = classifyKit({ title: clean });
+  const skipWiki = queryClass.matched && queryClass.category !== 'Gundam / Gunpla';
+
   const [curated, wikiResults, webResults] = await Promise.all([
     Promise.resolve(searchCuratedKits(clean, 4)),
-    searchFandomWiki(clean, 4),
+    skipWiki ? [] : searchFandomWiki(clean, 4),
     searchWebKitCandidates(clean, 5)
   ]);
 
@@ -942,11 +1001,11 @@ function decodeHtmlEntities(str) {
  * Calls the user's configured AI provider to extract structured kit metadata JSON.
  */
 async function callAiForKitExtraction(aiConfig, queryOrContext) {
-  const systemPrompt = `You are a specialist Building Kit & Scale Model archivist (expert in Bandai Gunpla, Moshow Toys, Rolife/Cutebee Book Nooks, Kotobukiya Zoids/Mecha, 30 Minutes Missions, and scale models).
+  const systemPrompt = `You are a specialist Building Kit & Scale Model archivist (expert in model kits of every kind).
 Given the user's kit query and any scraped web/wiki context, return ONLY a valid JSON object with the following fields:
 {
   "name": "Full clean official kit title (e.g. 'MGEX 1/100 Strike Freedom Gundam' or 'Rolife Sakura Densya Book Nook')",
-  "category": "One of: 'Gundam / Gunpla', 'Moshow Toys / Mecha', 'Book Nook / Diorama', '30 Minutes Missions / Sisters', 'Zoids / Kotobukiya', 'Evangelion / Moderoid', 'Military / Scale Vehicle', 'Wood / Metal Puzzle'",
+  "category": "One of: ${CATEGORY_NAMES.map((c) => `'${c}'`).join(', ')}",
   "brand": "Manufacturer name (e.g. 'Bandai Spirits', 'Moshow Toys', 'Rolife / Robotime', 'Kotobukiya')",
   "gradeScale": "Grade and scale (e.g. 'HG 1/144', 'RG 1/144', 'MG 1/100', 'MGEX 1/100', 'PG 1/60', 'SD / MGSD', '1/72 Progenitor Effect', 'Book Nook Standard')",
   "series": "Anime, timeline, or product line (e.g. 'Mobile Suit Gundam SEED Destiny', 'Mobile Suit Gundam: The Witch from Mercury', 'Progenitor Effect')",
@@ -962,103 +1021,124 @@ Respond ONLY with raw JSON and no markdown code fences.`;
 
   const rawResponse = await invokeUserAiProvider(aiConfig, systemPrompt, userPrompt);
   const jsonText = extractJsonBlock(rawResponse);
-  return JSON.parse(jsonText);
+  return sanitizeAiKitResult(JSON.parse(jsonText));
 }
 
 /**
- * Low-level multi-provider AI dispatcher (Gemini, OpenAI, Anthropic, OpenRouter, Custom).
+ * Model output is untrusted: keep only well-formed values, so a bad field falls
+ * back to the parser's value rather than reaching the kit form.
  */
-async function invokeUserAiProvider(aiConfig, systemPrompt, userPrompt) {
-  const { provider, apiKey, baseUrl, model } = aiConfig;
+function sanitizeAiKitResult(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const text = (value) => (typeof value === 'string' ? value.trim() : '');
 
-  if (provider === 'gemini') {
-    const endpoint = `${baseUrl || PROVIDER_DEFAULTS.gemini.baseUrl}/models/${encodeURIComponent(model || PROVIDER_DEFAULTS.gemini.model)}:generateContent`;
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          responseMimeType: 'application/json'
-        }
-      }),
-      signal: AbortSignal.timeout(15000)
-    });
+  const category = normalizeCategory(text(raw.category));
+  const releaseDate = text(raw.releaseDate).match(/^(\d{4}-\d{2})(-\d{2})?/);
+  const price =
+    typeof raw.retailPrice === 'number'
+      ? raw.retailPrice
+      : Number(text(raw.retailPrice).replace(/[^\d.]/g, '') || NaN);
+  const currency = text(raw.currency).toUpperCase();
 
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      throw new Error(`Gemini API error (${res.status}): ${errBody.slice(0, 180)}`);
-    }
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    if (!text) throw new Error('Gemini returned an empty response');
-    return text;
-  }
+  return {
+    name: text(raw.name),
+    category: isKnownCategory(category) ? category : '',
+    brand: normalizeBrand(text(raw.brand)),
+    gradeScale: text(raw.gradeScale),
+    series: text(raw.series),
+    modelNumber: text(raw.modelNumber),
+    releaseDate: releaseDate ? `${releaseDate[1]}${releaseDate[2] || '-01'}` : '',
+    retailPrice: Number.isFinite(price) && price > 0 ? price : null,
+    currency: /^[A-Z]{3}$/.test(currency) ? currency : '',
+    notes: text(raw.notes)
+  };
+}
 
-  if (provider === 'anthropic') {
-    const endpoint = `${baseUrl || PROVIDER_DEFAULTS.anthropic.baseUrl}/messages`;
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: model || PROVIDER_DEFAULTS.anthropic.model,
-        max_tokens: 800,
-        temperature: 0.1,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }]
-      }),
-      signal: AbortSignal.timeout(15000)
-    });
-
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      throw new Error(`Anthropic API error (${res.status}): ${errBody.slice(0, 180)}`);
-    }
-    const data = await res.json();
-    const text = data?.content?.[0]?.text || '';
-    if (!text) throw new Error('Anthropic returned an empty response');
-    return text;
-  }
-
-  // OpenAI, OpenRouter, or Custom OpenAI-compatible endpoint
-  const resolvedBase = baseUrl || PROVIDER_DEFAULTS[provider]?.baseUrl;
-  if (!resolvedBase) {
-    throw new Error('Custom provider requires a valid Base URL (e.g. https://api.openai.com/v1)');
-  }
-  const endpoint = `${resolvedBase.replace(/\/+$/, '')}/chat/completions`;
+async function postAiRequest(label, endpoint, headers, body) {
   const res = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: model || PROVIDER_DEFAULTS[provider]?.model || 'gpt-4o-mini',
-      temperature: 0.1,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
-    }),
-    signal: AbortSignal.timeout(15000)
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS)
   });
-
   if (!res.ok) {
     const errBody = await res.text().catch(() => '');
-    throw new Error(`AI Provider error (${res.status}): ${errBody.slice(0, 180)}`);
+    throw new Error(`${label} API error (${res.status}): ${errBody.slice(0, 180)}`);
   }
-  const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content || '';
-  if (!text) throw new Error('AI Provider returned an empty response');
+  return res.json();
+}
+
+/** One request adapter per wire format, selected by a provider's `apiStyle`. */
+const API_ADAPTERS = {
+  async gemini({ label, apiKey, baseUrl, model }, systemPrompt, userPrompt) {
+    const data = await postAiRequest(
+      label,
+      `${baseUrl}/models/${encodeURIComponent(model)}:generateContent`,
+      { 'x-goog-api-key': apiKey },
+      {
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
+      }
+    );
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  },
+
+  // No `temperature`: current Claude models reject non-default values. max_tokens
+  // leaves room for thinking, and the text block need not be the first block.
+  async anthropic({ label, apiKey, baseUrl, model }, systemPrompt, userPrompt) {
+    const data = await postAiRequest(
+      label,
+      `${baseUrl}/messages`,
+      { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      {
+        model,
+        max_tokens: 16000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      }
+    );
+    if (data?.stop_reason === 'refusal') throw new Error(`${label} declined the request`);
+    return (data?.content || []).find((block) => block.type === 'text')?.text || '';
+  },
+
+  // No `temperature`: several OpenAI-compatible models reject non-default values.
+  async openai({ label, apiKey, baseUrl, model }, systemPrompt, userPrompt) {
+    const data = await postAiRequest(
+      label,
+      `${baseUrl}/chat/completions`,
+      { Authorization: `Bearer ${apiKey}` },
+      {
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      }
+    );
+    return data?.choices?.[0]?.message?.content || '';
+  }
+};
+
+/**
+ * Low-level AI dispatcher: resolves provider defaults, then calls the matching adapter.
+ */
+async function invokeUserAiProvider(aiConfig, systemPrompt, userPrompt) {
+  const { provider, apiKey } = aiConfig;
+  if (!isKnownProvider(provider)) {
+    throw new Error(`Unknown AI provider: ${provider}`);
+  }
+  const defaults = PROVIDER_DEFAULTS[provider];
+  const baseUrl = String(aiConfig.baseUrl || defaults.baseUrl).replace(/\/+$/, '');
+  const model = aiConfig.model || defaults.model;
+  assertProviderRequirements(provider, baseUrl, model);
+
+  const text = await API_ADAPTERS[defaults.apiStyle](
+    { label: defaults.name, apiKey, baseUrl, model },
+    systemPrompt,
+    userPrompt
+  );
+  if (!text) throw new Error(`${defaults.name} returned an empty response`);
   return text;
 }
 
@@ -1188,10 +1268,15 @@ async function extractKitDetails({ url = '', query = '', candidate = null, userI
 
 module.exports = {
   PROVIDER_DEFAULTS,
+  CURATED_KITS,
   getUserAiConfigPublic,
   saveUserAiConfig,
   lookupKitCandidates,
+  searchCuratedKits,
+  parseKitMetadataFromText,
   extractKitDetails,
   callAiForKitExtraction,
+  sanitizeAiKitResult,
+  buildAiTestConfig,
   getUserAiConfigInternal
 };

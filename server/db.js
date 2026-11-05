@@ -1,6 +1,7 @@
 const { DatabaseSync } = require('node:sqlite');
 const fs = require('node:fs');
 const path = require('node:path');
+const { migrateKitTaxonomy, FALLBACK_CATEGORY } = require('./taxonomy');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const PHOTOS_DIR = path.join(DATA_DIR, 'uploads', 'photos');
@@ -63,7 +64,7 @@ function getDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
-      category TEXT NOT NULL DEFAULT 'Gundam / Gunpla',
+      category TEXT NOT NULL DEFAULT '${FALLBACK_CATEGORY}',
       brand TEXT NOT NULL DEFAULT '',
       series TEXT NOT NULL DEFAULT '',
       grade_scale TEXT NOT NULL DEFAULT '',
@@ -141,6 +142,8 @@ function getDb() {
   ensureColumn(db, 'kits', 'release_date', "TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, 'kit_photos', 'is_web_import', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn(db, 'kit_photos', 'source_url', "TEXT NOT NULL DEFAULT ''");
+
+  migrateKitTaxonomy(db);
 
   dbInstance = db;
   return db;

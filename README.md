@@ -62,6 +62,12 @@ Run the automated end-to-end test suite:
 npm test
 ```
 
+### Adding Kit Lines & AI Providers
+
+Categories, brands and classification rules all live in [server/taxonomy.js](server/taxonomy.js); the UI suggestions, AI prompt and stored-data normalisation derive from it. Add a maker to `BRANDS`, a product line to `LINE_RULES`, or a category to `CATEGORIES`, then add an example to `test/taxonomy.test.js`. Kits nothing recognises are filed under `Other Kit`.
+
+AI providers live in `PROVIDER_DEFAULTS` in [server/kitlookup.js](server/kitlookup.js). A provider using an existing wire format needs only that one entry.
+
 ---
 
 ## Legal & Copyright Compliance (German & EU Law)
